@@ -30,6 +30,7 @@ type PackagesModel struct {
 	name       string
 	executor   executors.Executor
 	pkgToIdx   map[string]int
+	idxToPkg   map[int]string
 	list       list.Model
 	focus      *bool
 	selection  map[int]bool
@@ -91,13 +92,16 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 	case packageUpdateMsg:
 		if msg.name == m.name {
 			pkgToIdx := map[string]int{}
+			idxToPkg := map[int]string{}
 			for k := range m.selection {
 				delete(m.selection, k)
 			}
 			for i, item := range msg.items {
 				pkgToIdx[item.FilterValue()] = i
+				idxToPkg[i] = item.FilterValue()
 			}
 			m.pkgToIdx = pkgToIdx
+			m.idxToPkg = idxToPkg
 			return m, tea.Sequence(
 				m.list.SetItems(msg.items),
 				func() tea.Msg {
@@ -105,16 +109,20 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 				},
 			)
 		}
-	case updatePackageStartMsg:
+	case updatePackagesStartMsg:
 		if msg.name == m.name {
-			if i, ok := m.pkgToIdx[msg.pkg]; ok {
-				m.loading[i] = true
+			for _, pkg := range msg.pkgs {
+				if i, ok := m.pkgToIdx[pkg]; ok {
+					m.loading[i] = true
+				}
 			}
 		}
-	case updatePackageFinishMsg:
+	case updatePackagesFinishMsg:
 		if msg.name == m.name {
-			if i, ok := m.pkgToIdx[msg.pkg]; ok {
-				m.loading[i] = false
+			for _, pkg := range msg.pkgs {
+				if i, ok := m.pkgToIdx[pkg]; ok {
+					m.loading[i] = false
+				}
 			}
 		}
 	case spinner.TickMsg:
@@ -140,16 +148,49 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 				}
 			case "backspace", "left", "h":
 				cmds = append(cmds, func() tea.Msg {
-					return focusManagersMsg{}
+					return FocusManagersMsg{}
 				})
 			case "u":
-				if item := m.list.SelectedItem(); item != nil {
-					pkg := item.FilterValue()
+				// Bulk update
+				var pkgs []string
+				for i, v := range m.selection {
+					if v {
+						pkgs = append(pkgs, m.idxToPkg[i])
+					}
+				}
+				if len(pkgs) > 0 {
+					for i := range m.selection {
+						m.selection[i] = false
+					}
 					cmds = append(cmds, tea.Sequence(
 						func() tea.Msg {
-							return updatePackageStartMsg{name: m.name, pkg: pkg}
+							return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
 						},
-						m.UpdatePackageCmd(pkg),
+						m.BulkUpdatePackageCmd(pkgs),
+					))
+				} else {
+					// Single update
+					if item := m.list.SelectedItem(); item != nil {
+						pkg := item.FilterValue()
+						cmds = append(cmds, tea.Sequence(
+							func() tea.Msg {
+								return updatePackagesStartMsg{name: m.name, pkgs: []string{pkg}}
+							},
+							m.UpdatePackageCmd(pkg),
+						))
+					}
+				}
+			case "a":
+				var pkgs []string
+				for k := range m.pkgToIdx {
+					pkgs = append(pkgs, k)
+				}
+				if len(pkgs) > 0 {
+					cmds = append(cmds, tea.Sequence(
+						func() tea.Msg {
+							return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
+						},
+						m.BulkUpdatePackageCmd(pkgs),
 					))
 				}
 			}
@@ -164,6 +205,10 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 
 func (m PackagesModel) View() string {
 	return m.list.View()
+}
+
+func (m PackagesModel) IsFocus() bool {
+	return *m.focus
 }
 
 func (m *PackagesModel) SetSize(w, h int) {
@@ -197,14 +242,58 @@ func (m *PackagesModel) GetPackagesCmd() tea.Cmd {
 
 func (m *PackagesModel) UpdatePackageCmd(pkg string) tea.Cmd {
 	return func() tea.Msg {
-		err := m.executor.Update(pkg)
-		if err != nil {
+		err := m.executor.Update(pkg, "")
+		if err == executors.PasswordErr {
+			return passwordInputStartMsg{
+				Callback: func(password string) tea.Cmd {
+					return func() tea.Msg {
+						err := m.executor.Update(pkg, password)
+						if err != nil {
+							m.log(fmt.Sprintf("Error update pacakge (after password input): %v", err))
+						}
+						return updatePackagesFinishMsg{
+							name: m.name,
+							pkgs: []string{pkg},
+						}
+					}
+				},
+			}
+		} else if err != nil {
 			m.log(fmt.Sprintf("Error update pacakge: %v", err))
 		}
 
-		return updatePackageFinishMsg{
+		return updatePackagesFinishMsg{
 			name: m.name,
-			pkg:  pkg,
+			pkgs: []string{pkg},
+		}
+	}
+}
+
+func (m *PackagesModel) BulkUpdatePackageCmd(pkgs []string) tea.Cmd {
+	return func() tea.Msg {
+		err := m.executor.BulkUpdate(pkgs, "")
+		if err == executors.PasswordErr {
+			return passwordInputStartMsg{
+				Callback: func(password string) tea.Cmd {
+					return func() tea.Msg {
+						err := m.executor.BulkUpdate(pkgs, password)
+						if err != nil {
+							m.log(fmt.Sprintf("Error update pacakge (after password input): %v", err))
+						}
+						return updatePackagesFinishMsg{
+							name: m.name,
+							pkgs: pkgs,
+						}
+					}
+				},
+			}
+		} else if err != nil {
+			m.log(fmt.Sprintf("Error update pacakge: %v", err))
+		}
+
+		return updatePackagesFinishMsg{
+			name: m.name,
+			pkgs: pkgs,
 		}
 	}
 }

@@ -3,6 +3,7 @@ package executors
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
 	"regexp"
@@ -36,11 +37,19 @@ func (ae *AptExecutor) GetPackages() ([]*PackageInfo, error) {
 	return packages, nil
 }
 
-func (ae *AptExecutor) Update(pkg string) error {
-	log.Printf("Running apt install --dry-run --only-upgrade %s", pkg)
-	cmd := exec.Command("sudo", "apt", "install", "--dry-run", "--only-upgrade", pkg)
+func (ae *AptExecutor) Update(pkg, password string) error {
+	cmds := []string{"sudo", "-S", "apt", "install", "--dry-run", "--only-upgrade", pkg}
+
+	log.Printf("Running %s", strings.Join(cmds, " "))
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+	cmd.Stdin = strings.NewReader(password + "\n")
 
 	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return err
 	}
@@ -49,19 +58,65 @@ func (ae *AptExecutor) Update(pkg string) error {
 		return err
 	}
 
-	scanner := bufio.NewScanner(stdout)
+	var passworderr bool
+	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
 	for scanner.Scan() {
-		log.Print(scanner.Text())
+		line := scanner.Text()
+		log.Print(line)
+		if strings.Contains(line, "no password was provided") {
+			passworderr = true
+		}
 	}
 
 	if err := cmd.Wait(); err != nil {
+		if passworderr {
+			return PasswordErr
+		}
 		return err
 	}
 
 	return nil
 }
 
-func (ae *AptExecutor) BulkUpdate(pkgs []string) error {
+func (ae *AptExecutor) BulkUpdate(pkgs []string, password string) error {
+	cmds := []string{"sudo", "-S", "apt", "install", "--dry-run", "--only-upgrade"}
+	cmds = append(cmds, pkgs...)
+
+	log.Printf("Running %s", strings.Join(cmds, " "))
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+	cmd.Stdin = strings.NewReader(password + "\n")
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	var passworderr bool
+	scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
+	for scanner.Scan() {
+		line := scanner.Text()
+		log.Print(line)
+		if strings.Contains(line, "no password was provided") {
+			passworderr = true
+		}
+	}
+
+	if err := cmd.Wait(); err != nil {
+		if passworderr {
+			return PasswordErr
+		}
+		return err
+	}
+
 	return nil
 }
 

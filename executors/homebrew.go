@@ -1,6 +1,7 @@
 package executors
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os/exec"
@@ -35,11 +36,60 @@ func (ae *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
 	return packages, nil
 }
 
-func (ae *HomebrewExecutor) Update(pkg string) error {
+func (ae *HomebrewExecutor) Update(pkg, _ string) error {
+	cmds := []string{"brew", "upgrade", "--dry-run", pkg}
+
+	log.Printf("Running %s", strings.Join(cmds, " "))
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		log.Print(line)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (ae *HomebrewExecutor) BulkUpdate(pkgs []string) error {
+func (ae *HomebrewExecutor) BulkUpdate(pkgs []string, password string) error {
+	cmds := []string{"brew", "upgrade", "--dry-run"}
+	cmds = append(cmds, pkgs...)
+
+	log.Printf("Running %s", strings.Join(cmds, " "))
+	cmd := exec.Command(cmds[0], cmds[1:]...)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		log.Print(line)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

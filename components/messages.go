@@ -1,6 +1,11 @@
 package components
 
-import "github.com/charmbracelet/bubbles/list"
+import (
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type UpdateLayoutMsg struct{}
 
 type ChangeManagerSelectionMsg struct {
 	Name string
@@ -19,18 +24,26 @@ type getPackageFinishMsg struct {
 	name string
 }
 
-type updatePackageStartMsg struct {
+type updatePackagesStartMsg struct {
 	name string
-	pkg  string
+	pkgs []string
 }
 
-type updatePackageFinishMsg struct {
+type updatePackagesFinishMsg struct {
 	name string
-	pkg  string
+	pkgs []string
 }
 
-type focusManagersMsg struct{}
-
-type focusPackagesMsg struct {
-	name string
+type passwordInputStartMsg struct {
+	Callback func(password string) tea.Cmd
 }
+
+type FocusManagersMsg struct{}
+
+type FocusPackagesMsg struct {
+	Name string
+}
+
+type FocusDialogMsg struct{}
+
+type BlurDialogMsg struct{}

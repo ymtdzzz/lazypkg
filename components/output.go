@@ -5,13 +5,15 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type LogWriter struct {
-	mu   sync.Mutex
-	logs *ring.Ring
+	mu      sync.Mutex
+	content string
+	logs    *ring.Ring
 }
 
 func (w *LogWriter) Write(b []byte) (n int, err error) {
@@ -34,19 +36,39 @@ func (w *LogWriter) getLog() string {
 	return sb.String()
 }
 
+type outputKeyMap struct {
+	up   key.Binding
+	down key.Binding
+}
+
+var defaultOutputKeyMap = outputKeyMap{
+	up: key.NewBinding(
+		key.WithKeys("ctrl+k"),
+		key.WithHelp("ctrl+k", "up"),
+	),
+	down: key.NewBinding(
+		key.WithKeys("ctrl+j"),
+		key.WithHelp("ctrl+j", "down"),
+	),
+}
+
 type OutputModel struct {
+	keyMap   outputKeyMap
 	viewport viewport.Model
 	writer   *LogWriter
 	content  string
 }
 
 func newViewPort(w, h int) viewport.Model {
-	return viewport.New(w, h)
+	vp := viewport.New(w, h)
+	vp.KeyMap = viewport.KeyMap{}
+	return vp
 }
 
 func NewOutputModel() OutputModel {
 	r := ring.New(200)
 	return OutputModel{
+		keyMap:   defaultOutputKeyMap,
 		viewport: newViewPort(0, 0),
 		writer: &LogWriter{
 			logs: r,
@@ -59,8 +81,12 @@ func (m *OutputModel) GetLogWriter() *LogWriter {
 }
 
 func (m *OutputModel) setContent() {
-	m.viewport.SetContent(m.writer.getLog())
-	m.viewport.GotoBottom()
+	prev := m.content
+	m.content = m.writer.getLog()
+	if prev != m.content {
+		m.viewport.SetContent(m.content)
+		m.viewport.GotoBottom()
+	}
 }
 
 func (m *OutputModel) SetSize(w, h int) {
@@ -75,6 +101,17 @@ func (m OutputModel) Init() tea.Cmd {
 func (m OutputModel) Update(msg tea.Msg) (OutputModel, tea.Cmd) {
 	var cmd tea.Cmd
 	m.setContent()
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.keyMap.down):
+			m.viewport.LineDown(1)
+		case key.Matches(msg, m.keyMap.up):
+			m.viewport.LineUp(1)
+		}
+	}
+
 	m.viewport, cmd = m.viewport.Update(msg)
 
 	return m, cmd

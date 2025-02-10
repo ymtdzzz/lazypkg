@@ -113,20 +113,6 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 		if idx, ok := m.mgrToIdx[msg.name]; ok {
 			m.loading[idx] = false
 		}
-	case focusManagersMsg:
-		m.Focus(true)
-		for _, pkg := range m.pkglists {
-			pkg.Focus(false)
-		}
-	case focusPackagesMsg:
-		m.Focus(false)
-		for k, pkg := range m.pkglists {
-			if k == msg.name {
-				pkg.Focus(true)
-			} else {
-				pkg.Focus(false)
-			}
-		}
 	}
 
 	if *m.focus {
@@ -136,8 +122,8 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 			case "enter", "right", "l":
 				if item := m.list.SelectedItem(); item != nil {
 					cmds = append(cmds, func() tea.Msg {
-						return focusPackagesMsg{
-							name: item.FilterValue(),
+						return FocusPackagesMsg{
+							Name: item.FilterValue(),
 						}
 					})
 				}
@@ -172,6 +158,10 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 
 func (m ManagersModel) View() string {
 	return m.list.View()
+}
+
+func (m ManagersModel) IsFocus() bool {
+	return *m.focus
 }
 
 func (m *ManagersModel) SetSize(w, h int) {

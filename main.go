@@ -27,11 +27,14 @@ var borderStyle = lipgloss.NewStyle().
 	Padding(1)
 
 type model struct {
+	w, h        int
 	focusRight  bool
 	selectedPkg string
 	mgrlist     components.ManagersModel
 	pkglists    map[string]*components.PackagesModel
 	out         components.OutputModel
+	dialog      components.PasswordModel
+	prevCmd     tea.Cmd
 }
 
 func (m model) Init() tea.Cmd {
@@ -41,6 +44,8 @@ func (m model) Init() tea.Cmd {
 	for _, pkg := range m.pkglists {
 		cmds = append(cmds, pkg.Init())
 	}
+	cmds = append(cmds, m.out.Init())
+	cmds = append(cmds, m.dialog.Init())
 
 	return tea.Batch(cmds...)
 }
@@ -56,9 +61,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
+		m.w, m.h = msg.Width, msg.Height
 		m.updateLayout(msg.Width, msg.Height)
+	case components.UpdateLayoutMsg:
+		m.updateLayout(m.w, m.h)
 	case components.ChangeManagerSelectionMsg:
 		m.selectedPkg = msg.Name
+	case components.FocusManagersMsg:
+		m.mgrlist.Focus(true)
+		for _, pkg := range m.pkglists {
+			pkg.Focus(false)
+		}
+	case components.FocusPackagesMsg:
+		m.mgrlist.Focus(false)
+		for k, pkg := range m.pkglists {
+			if k == msg.Name {
+				pkg.Focus(true)
+			} else {
+				pkg.Focus(false)
+			}
+		}
+	case components.FocusDialogMsg:
+		m.storePrevCmd()
+		m.mgrlist.Focus(false)
+		for _, pkg := range m.pkglists {
+			pkg.Focus(false)
+		}
+		cmds = append(cmds, m.dialog.Focus())
+	case components.BlurDialogMsg:
+		m.dialog.Blur()
+		cmds = append(cmds, m.prevCmd)
+		m.prevCmd = nil
 	}
 
 	m.mgrlist, cmd = m.mgrlist.Update(msg)
@@ -71,6 +104,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.out, cmd = m.out.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.dialog, cmd = m.dialog.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -88,6 +124,7 @@ func (m model) View() string {
 	right := lipgloss.JoinVertical(
 		lipgloss.Left,
 		rightTop,
+		m.dialog.View(),
 		rightBottom,
 	)
 
@@ -107,14 +144,34 @@ func (m *model) updateLayout(w, h int) {
 
 	dfw, dfh := docStyle.GetFrameSize()
 	bfw, bfh := borderStyle.GetFrameSize()
+	_, dh := m.dialog.GetSize()
 
 	m.mgrlist.SetSize(leftWidth-dfw, h-dfh)
 
 	for _, l := range m.pkglists {
-		l.SetSize(rightWidth-dfw, rightHeight-dfh)
+		l.SetSize(rightWidth-dfw, rightHeight-dfh-dh)
 	}
 
 	m.out.SetSize(rightWidth-bfw, rightHeight-bfh)
+}
+
+func (m *model) storePrevCmd() {
+	m.prevCmd = nil
+	if m.mgrlist.IsFocus() {
+		m.prevCmd = func() tea.Msg {
+			return components.FocusManagersMsg{}
+		}
+		return
+	}
+	for k, pkg := range m.pkglists {
+		if pkg.IsFocus() {
+			m.prevCmd = func() tea.Msg {
+				return components.FocusPackagesMsg{
+					Name: k,
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -134,7 +191,9 @@ func main() {
 	out := components.NewOutputModel()
 	log.SetOutput(out.GetLogWriter())
 
-	m := model{false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out}
+	dialog := components.NewPasswordModel()
+
+	m := model{0, 0, false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out, dialog, nil}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
