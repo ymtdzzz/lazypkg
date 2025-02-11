@@ -12,6 +12,7 @@ import (
 type managersKeyMap struct {
 	Toggle key.Binding
 	Select key.Binding
+	Update key.Binding
 }
 
 func newManagersKeyMap() managersKeyMap {
@@ -24,6 +25,10 @@ func newManagersKeyMap() managersKeyMap {
 			key.WithKeys("enter", "right", "l"),
 			key.WithHelp("enter | l | →", "select"),
 		),
+		Update: key.NewBinding(
+			key.WithKeys("u"),
+			key.WithHelp("u", "update"),
+		),
 	}
 }
 
@@ -32,6 +37,7 @@ type ManagersModel struct {
 	spinner    spinner.Model
 	spinnerStr *string
 	mgrToIdx   map[string]int
+	idxToMgr   map[int]string
 	list       list.Model
 	pkglists   map[string]*PackagesModel
 	focus      *bool
@@ -50,11 +56,13 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 
 	var items []list.Item
 	mgrToIdx := map[string]int{}
+	idxToMgr := map[int]string{}
 	for i, mgr := range mgrs {
 		items = append(items, item{
 			title: mgr,
 		})
 		mgrToIdx[mgr] = i
+		idxToMgr[i] = mgr
 	}
 	l := list.New(
 		items,
@@ -83,6 +91,7 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 		spinner:    s,
 		spinnerStr: &ss,
 		mgrToIdx:   mgrToIdx,
+		idxToMgr:   idxToMgr,
 		list:       l,
 		pkglists:   pkglists,
 		selection:  selection,
@@ -95,10 +104,7 @@ func (m ManagersModel) Init() tea.Cmd {
 	cmds := []tea.Cmd{m.spinner.Tick}
 
 	for _, pkg := range m.pkglists {
-		cmds = append(cmds, func() tea.Msg {
-			return getPackageStartMsg{name: pkg.name}
-		})
-		cmds = append(cmds, pkg.GetPackagesCmd())
+		cmds = append(cmds, pkg.getPackagesCmd())
 	}
 
 	return tea.Sequence(cmds...)
@@ -142,6 +148,47 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 				} else {
 					m.selection[idx] = true
 				}
+			case key.Matches(msg, m.keyMap.Update):
+				// Bulk update
+				var mgrs []string
+				for i, v := range m.selection {
+					if v {
+						mgrs = append(mgrs, m.idxToMgr[i])
+					}
+				}
+				if len(mgrs) > 0 {
+					for i := range m.selection {
+						m.selection[i] = false
+					}
+
+					subcmds := []tea.Cmd{}
+					for _, mgr := range mgrs {
+						subcmds = append(subcmds, func() tea.Msg {
+							return updateAllPackagesMsg{
+								name:      mgr,
+								confirmed: true,
+							}
+						})
+					}
+					cmds = append(cmds, showDialogCmd(
+						fmt.Sprintf("All packages of selected %d managers will be updated", len(mgrs)),
+						tea.Sequence(subcmds...),
+					))
+				} else {
+					// Single update
+					if item := m.list.SelectedItem(); item != nil {
+						mgr := item.FilterValue()
+						cmds = append(cmds, showDialogCmd(
+							fmt.Sprintf("All %s package will be updated", mgr),
+							func() tea.Msg {
+								return updateAllPackagesMsg{
+									name:      mgr,
+									confirmed: true,
+								}
+							},
+						))
+					}
+				}
 			}
 		}
 
@@ -157,6 +204,19 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 				return ChangeManagerSelectionMsg{
 					Name: now.FilterValue(),
 				}
+			})
+		}
+	}
+
+	for mgr, l := range m.pkglists {
+		if i, ok := m.mgrToIdx[mgr]; ok {
+			desc := "✓"
+			if l.Count() > 0 {
+				desc = fmt.Sprintf("[%d]", l.Count())
+			}
+			m.list.SetItem(i, item{
+				title: mgr,
+				desc:  desc,
 			})
 		}
 	}

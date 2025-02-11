@@ -32,6 +32,12 @@ type updatePackagesStartMsg struct {
 type updatePackagesFinishMsg struct {
 	name string
 	pkgs []string
+	err  error
+}
+
+type updateAllPackagesMsg struct {
+	name      string
+	confirmed bool
 }
 
 type passwordInputStartMsg struct {

@@ -90,6 +90,7 @@ func NewPackageModel(name string, executor executors.Executor) PackagesModel {
 		spinnerStr: &ss,
 		executor:   executor,
 		pkgToIdx:   map[string]int{},
+		idxToPkg:   map[int]string{},
 		list:       l,
 		selection:  selection,
 		loading:    loading,
@@ -142,6 +143,11 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 					m.loading[i] = false
 				}
 			}
+			cmds = append(cmds, m.getPackagesCmd())
+		}
+	case updateAllPackagesMsg:
+		if msg.name == m.name {
+			cmds = m.updateAll(cmds, msg.confirmed)
 		}
 	case spinner.TickMsg:
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -182,7 +188,7 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 							func() tea.Msg {
 								return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
 							},
-							m.BulkUpdatePackageCmd(pkgs),
+							m.bulkUpdatePackageCmd(pkgs),
 						),
 					))
 				} else {
@@ -195,27 +201,13 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 								func() tea.Msg {
 									return updatePackagesStartMsg{name: m.name, pkgs: []string{pkg}}
 								},
-								m.UpdatePackageCmd(pkg),
+								m.updatePackageCmd(pkg),
 							),
 						))
 					}
 				}
 			case key.Matches(msg, m.keyMap.UpdateAll):
-				var pkgs []string
-				for k := range m.pkgToIdx {
-					pkgs = append(pkgs, k)
-				}
-				if len(pkgs) > 0 {
-					cmds = append(cmds, showDialogCmd(
-						fmt.Sprintf("All %d packages will be updated", len(pkgs)),
-						tea.Sequence(
-							func() tea.Msg {
-								return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
-							},
-							m.BulkUpdatePackageCmd(pkgs),
-						),
-					))
-				}
+				cmds = m.updateAll(cmds, false)
 			}
 		}
 
@@ -242,6 +234,35 @@ func (m PackagesModel) FullHelp() [][]key.Binding {
 	return m.list.FullHelp()
 }
 
+func (m PackagesModel) Count() int {
+	return len(m.list.Items())
+}
+
+func (m PackagesModel) updateAll(cmds []tea.Cmd, confirmed bool) []tea.Cmd {
+	var pkgs []string
+	for k := range m.pkgToIdx {
+		pkgs = append(pkgs, k)
+	}
+	if len(pkgs) > 0 {
+		cmd := tea.Sequence(
+			func() tea.Msg {
+				return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
+			},
+			m.bulkUpdatePackageCmd(pkgs),
+		)
+		if confirmed {
+			cmds = append(cmds, cmd)
+		} else {
+			cmds = append(cmds, showDialogCmd(
+				fmt.Sprintf("All %d packages will be updated", len(pkgs)),
+				cmd,
+			))
+		}
+	}
+
+	return cmds
+}
+
 func (m *PackagesModel) SetSize(w, h int) {
 	m.list.SetSize(w, h)
 }
@@ -259,19 +280,24 @@ func (m *PackagesModel) log(text string) {
 	log.Printf("[%s] %s", m.name, text)
 }
 
-func (m *PackagesModel) GetPackagesCmd() tea.Cmd {
-	return func() tea.Msg {
-		pkgs, err := m.executor.GetPackages()
-		if err != nil {
-			m.log(fmt.Sprintf("Error fetching packages: %v", err))
-			pkgs = []*executors.PackageInfo{}
-		}
+func (m *PackagesModel) getPackagesCmd() tea.Cmd {
+	return tea.Sequence(
+		func() tea.Msg {
+			return getPackageStartMsg{name: m.name}
+		},
+		func() tea.Msg {
+			pkgs, err := m.executor.GetPackages()
+			if err != nil {
+				m.log(fmt.Sprintf("Error fetching packages: %v", err))
+				pkgs = []*executors.PackageInfo{}
+			}
 
-		return packageUpdateMsg{m.name, getPackageItems(pkgs)}
-	}
+			return packageUpdateMsg{m.name, getPackageItems(pkgs)}
+		},
+	)
 }
 
-func (m *PackagesModel) UpdatePackageCmd(pkg string) tea.Cmd {
+func (m *PackagesModel) updatePackageCmd(pkg string) tea.Cmd {
 	return func() tea.Msg {
 		err := m.executor.Update(pkg, "")
 		if err == executors.PasswordErr {
@@ -300,7 +326,7 @@ func (m *PackagesModel) UpdatePackageCmd(pkg string) tea.Cmd {
 	}
 }
 
-func (m *PackagesModel) BulkUpdatePackageCmd(pkgs []string) tea.Cmd {
+func (m *PackagesModel) bulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 	return func() tea.Msg {
 		err := m.executor.BulkUpdate(pkgs, "")
 		if err == executors.PasswordErr {
@@ -314,6 +340,7 @@ func (m *PackagesModel) BulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 						return updatePackagesFinishMsg{
 							name: m.name,
 							pkgs: pkgs,
+							err:  err,
 						}
 					}
 				},
@@ -325,6 +352,7 @@ func (m *PackagesModel) BulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 		return updatePackagesFinishMsg{
 			name: m.name,
 			pkgs: pkgs,
+			err:  err,
 		}
 	}
 }

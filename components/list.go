@@ -29,9 +29,10 @@ func (i item) FilterValue() string { return i.title }
 
 type itemDelegate struct {
 	spinnerStr *string
-	selection  map[int]bool
-	loading    map[int]bool
-	focus      *bool
+	// TODO: set via item struct
+	selection map[int]bool
+	loading   map[int]bool
+	focus     *bool
 }
 
 func newItemDelegate(spinnerStr *string, selection, loading map[int]bool, focus *bool) itemDelegate {
