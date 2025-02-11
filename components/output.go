@@ -41,15 +41,17 @@ type outputKeyMap struct {
 	down key.Binding
 }
 
-var defaultOutputKeyMap = outputKeyMap{
-	up: key.NewBinding(
-		key.WithKeys("ctrl+k"),
-		key.WithHelp("ctrl+k", "up"),
-	),
-	down: key.NewBinding(
-		key.WithKeys("ctrl+j"),
-		key.WithHelp("ctrl+j", "down"),
-	),
+func newOutputKeyMap() outputKeyMap {
+	return outputKeyMap{
+		up: key.NewBinding(
+			key.WithKeys("ctrl+k"),
+			key.WithHelp("ctrl+k", "[Logs] up"),
+		),
+		down: key.NewBinding(
+			key.WithKeys("ctrl+j"),
+			key.WithHelp("ctrl+j", "[Logs] down"),
+		),
+	}
 }
 
 type OutputModel struct {
@@ -68,7 +70,7 @@ func newViewPort(w, h int) viewport.Model {
 func NewOutputModel() OutputModel {
 	r := ring.New(200)
 	return OutputModel{
-		keyMap:   defaultOutputKeyMap,
+		keyMap:   newOutputKeyMap(),
 		viewport: newViewPort(0, 0),
 		writer: &LogWriter{
 			logs: r,
@@ -119,4 +121,18 @@ func (m OutputModel) Update(msg tea.Msg) (OutputModel, tea.Cmd) {
 
 func (m OutputModel) View() string {
 	return m.viewport.View()
+}
+
+func (m OutputModel) ShortHelp() []key.Binding {
+	return []key.Binding{
+		m.keyMap.up,
+		m.keyMap.down,
+	}
+}
+
+func (m OutputModel) FullHelp() [][]key.Binding {
+	return [][]key.Binding{{
+		m.keyMap.up,
+		m.keyMap.down,
+	}}
 }

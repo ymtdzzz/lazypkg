@@ -12,7 +12,10 @@ import (
 )
 
 type packagesKeyMap struct {
-	Toggle key.Binding
+	Toggle    key.Binding
+	Back      key.Binding
+	Update    key.Binding
+	UpdateAll key.Binding
 }
 
 func newPackagesKeyMap() packagesKeyMap {
@@ -21,10 +24,23 @@ func newPackagesKeyMap() packagesKeyMap {
 			key.WithKeys(" "),
 			key.WithHelp("space", "toggle check"),
 		),
+		Back: key.NewBinding(
+			key.WithKeys("backspace", "left", "h"),
+			key.WithHelp("backspace | h | ←", "back"),
+		),
+		Update: key.NewBinding(
+			key.WithKeys("u"),
+			key.WithHelp("u", "update"),
+		),
+		UpdateAll: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "update all"),
+		),
 	}
 }
 
 type PackagesModel struct {
+	keyMap     packagesKeyMap
 	spinner    spinner.Model
 	spinnerStr *string
 	name       string
@@ -55,18 +71,20 @@ func NewPackageModel(name string, executor executors.Executor) PackagesModel {
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
+	l.DisableQuitKeybindings()
 	l.Styles.Title = blurTitleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	km := newPackagesKeyMap()
 	l.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle}
+		return []key.Binding{km.Toggle, km.Back, km.Update, km.UpdateAll}
 	}
 	l.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle}
+		return []key.Binding{km.Toggle, km.Back, km.Update, km.UpdateAll}
 	}
 
 	return PackagesModel{
+		keyMap:     km,
 		name:       name,
 		spinner:    s,
 		spinnerStr: &ss,
@@ -134,23 +152,19 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 	if *m.focus {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
-			switch key := msg.String(); key {
-			case "enter":
-				if item := m.list.SelectedItem(); item != nil {
-					m.log(fmt.Sprintf("selected: %s", item.FilterValue()))
-				}
-			case " ":
+			switch {
+			case key.Matches(msg, m.keyMap.Toggle):
 				idx := m.list.Index()
 				if v, ok := m.selection[idx]; v && ok {
 					m.selection[idx] = false
 				} else {
 					m.selection[idx] = true
 				}
-			case "backspace", "left", "h":
+			case key.Matches(msg, m.keyMap.Back):
 				cmds = append(cmds, func() tea.Msg {
 					return FocusManagersMsg{}
 				})
-			case "u":
+			case key.Matches(msg, m.keyMap.Update):
 				// Bulk update
 				var pkgs []string
 				for i, v := range m.selection {
@@ -180,7 +194,7 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 						))
 					}
 				}
-			case "a":
+			case key.Matches(msg, m.keyMap.UpdateAll):
 				var pkgs []string
 				for k := range m.pkgToIdx {
 					pkgs = append(pkgs, k)
@@ -209,6 +223,14 @@ func (m PackagesModel) View() string {
 
 func (m PackagesModel) IsFocus() bool {
 	return *m.focus
+}
+
+func (m PackagesModel) ShortHelp() []key.Binding {
+	return m.list.ShortHelp()
+}
+
+func (m PackagesModel) FullHelp() [][]key.Binding {
+	return m.list.FullHelp()
 }
 
 func (m *PackagesModel) SetSize(w, h int) {

@@ -17,9 +17,16 @@ func (ae *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
 	var packages []*PackageInfo
 
 	// check for update
-	log.Print("Running brew outdated --verbose")
-	cmd := exec.Command("brew", "outdated", "--verbose")
+	log.Print("Running brew update")
+	cmd := exec.Command("brew", "update")
 	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Print("Running brew outdated --verbose")
+	cmd = exec.Command("brew", "outdated", "--verbose")
+	output, err = cmd.Output()
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/ymtdzzz/lazypkg/components"
@@ -16,6 +18,19 @@ const (
 	PACKAGE_MANAGER_HOMEBREW = "homebrew"
 )
 
+type mainKeyMap struct {
+	quit key.Binding
+}
+
+func newMainKeyMap() mainKeyMap {
+	return mainKeyMap{
+		quit: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
 var docStyle = lipgloss.NewStyle().
 	Margin(1, 2)
 
@@ -26,15 +41,20 @@ var borderStyle = lipgloss.NewStyle().
 	Border(lipgloss.NormalBorder(), true, false, false, false).
 	Padding(1)
 
+var helpStyle = lipgloss.NewStyle().PaddingLeft(2)
+
 type model struct {
-	w, h        int
-	focusRight  bool
-	selectedPkg string
-	mgrlist     components.ManagersModel
-	pkglists    map[string]*components.PackagesModel
-	out         components.OutputModel
-	dialog      components.PasswordModel
-	prevCmd     tea.Cmd
+	keyMap       mainKeyMap
+	w, h         int
+	focusRight   bool
+	selectedPkg  string
+	mgrlist      components.ManagersModel
+	pkglists     map[string]*components.PackagesModel
+	out          components.OutputModel
+	dialog       components.PasswordModel
+	prevCmd      tea.Cmd
+	globalKeyMap globalKeyMap
+	help         help.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -72,11 +92,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, pkg := range m.pkglists {
 			pkg.Focus(false)
 		}
+		m.globalKeyMap = newGlobalKeyMap(m.keyMap, m.mgrlist, m.out)
 	case components.FocusPackagesMsg:
 		m.mgrlist.Focus(false)
 		for k, pkg := range m.pkglists {
 			if k == msg.Name {
 				pkg.Focus(true)
+				m.globalKeyMap = newGlobalKeyMap(m.keyMap, pkg, m.out)
 			} else {
 				pkg.Focus(false)
 			}
@@ -88,6 +110,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			pkg.Focus(false)
 		}
 		cmds = append(cmds, m.dialog.Focus())
+		m.globalKeyMap = newGlobalKeyMap(m.keyMap, m.out)
 	case components.BlurDialogMsg:
 		m.dialog.Blur()
 		cmds = append(cmds, m.prevCmd)
@@ -107,6 +130,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	m.dialog, cmd = m.dialog.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.help, cmd = m.help.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
@@ -134,7 +160,13 @@ func (m model) View() string {
 		right,
 	)
 
-	return layout
+	layoutWithHelp := lipgloss.JoinVertical(
+		lipgloss.Left,
+		layout,
+		helpStyle.Render(m.help.View(m.globalKeyMap)),
+	)
+
+	return layoutWithHelp
 }
 
 func (m *model) updateLayout(w, h int) {
@@ -174,6 +206,32 @@ func (m *model) storePrevCmd() {
 	}
 }
 
+type globalKeyMap struct {
+	shortHelp []key.Binding
+	fullHelp  [][]key.Binding
+}
+
+func newGlobalKeyMap(km mainKeyMap, kms ...help.KeyMap) globalKeyMap {
+	short := []key.Binding{km.quit}
+	full := [][]key.Binding{{km.quit}}
+
+	for _, km := range kms {
+		short = append(short, km.ShortHelp()...)
+		full = append(full, km.FullHelp()...)
+	}
+
+	return globalKeyMap{short, full}
+}
+
+func (m globalKeyMap) ShortHelp() []key.Binding {
+	return m.shortHelp
+}
+
+// TODO: currently not implemented properly
+func (m globalKeyMap) FullHelp() [][]key.Binding {
+	return m.fullHelp
+}
+
 func main() {
 	apt := components.NewPackageModel(PACKAGE_MANAGER_APT, &executors.AptExecutor{})
 	homebrew := components.NewPackageModel(PACKAGE_MANAGER_HOMEBREW, &executors.HomebrewExecutor{})
@@ -193,7 +251,11 @@ func main() {
 
 	dialog := components.NewPasswordModel()
 
-	m := model{0, 0, false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out, dialog, nil}
+	km := newMainKeyMap()
+	globalKeyMap := newGlobalKeyMap(km, mgrlist, out)
+	help := help.New()
+
+	m := model{km, 0, 0, false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out, dialog, nil, globalKeyMap, help}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

@@ -54,7 +54,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	check := " "
 	if v, ok := d.selection[index]; ok && v {
-		check = "✓"
+		check = "*"
 	}
 	str := fmt.Sprintf("%s %s %s", check, i.title, i.desc)
 	if v, ok := d.loading[index]; ok && v {

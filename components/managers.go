@@ -11,6 +11,7 @@ import (
 
 type managersKeyMap struct {
 	Toggle key.Binding
+	Select key.Binding
 }
 
 func newManagersKeyMap() managersKeyMap {
@@ -19,10 +20,15 @@ func newManagersKeyMap() managersKeyMap {
 			key.WithKeys(" "),
 			key.WithHelp("space", "toggle check"),
 		),
+		Select: key.NewBinding(
+			key.WithKeys("enter", "right", "l"),
+			key.WithHelp("enter | l | →", "select"),
+		),
 	}
 }
 
 type ManagersModel struct {
+	keyMap     managersKeyMap
 	spinner    spinner.Model
 	spinnerStr *string
 	mgrToIdx   map[string]int
@@ -60,18 +66,20 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
+	l.DisableQuitKeybindings()
 	l.Styles.Title = blurTitleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	km := newManagersKeyMap()
 	l.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle}
+		return []key.Binding{km.Toggle, km.Select}
 	}
 	l.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle}
+		return []key.Binding{km.Toggle, km.Select}
 	}
 
 	return ManagersModel{
+		keyMap:     km,
 		spinner:    s,
 		spinnerStr: &ss,
 		mgrToIdx:   mgrToIdx,
@@ -118,8 +126,8 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 	if *m.focus {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
-			switch key := msg.String(); key {
-			case "enter", "right", "l":
+			switch {
+			case key.Matches(msg, m.keyMap.Select):
 				if item := m.list.SelectedItem(); item != nil {
 					cmds = append(cmds, func() tea.Msg {
 						return FocusPackagesMsg{
@@ -127,7 +135,7 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 						}
 					})
 				}
-			case " ":
+			case key.Matches(msg, m.keyMap.Toggle):
 				idx := m.list.Index()
 				if v, ok := m.selection[idx]; v && ok {
 					m.selection[idx] = false
@@ -162,6 +170,14 @@ func (m ManagersModel) View() string {
 
 func (m ManagersModel) IsFocus() bool {
 	return *m.focus
+}
+
+func (m ManagersModel) ShortHelp() []key.Binding {
+	return m.list.ShortHelp()
+}
+
+func (m ManagersModel) FullHelp() [][]key.Binding {
+	return m.list.FullHelp()
 }
 
 func (m *ManagersModel) SetSize(w, h int) {
