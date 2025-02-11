@@ -43,12 +43,14 @@ func (m PasswordModel) Update(msg tea.Msg) (PasswordModel, tea.Cmd) {
 				cmds = append(cmds, func() tea.Msg {
 					return BlurPasswordDialogMsg{}
 				}, updateLayoutCmd())
+				m.textinput.Reset()
 			case "enter":
 				m.show = false
 				cmds = append(cmds, func() tea.Msg {
 					return BlurPasswordDialogMsg{}
 				}, m.CallbackInBatch(), updateLayoutCmd())
 				m.FlushCallbacks()
+				m.textinput.Reset()
 			}
 		case passwordInputStartMsg:
 			m.PushCallback(msg.callback)
