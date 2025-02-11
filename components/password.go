@@ -6,12 +6,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var dialogStyle = lipgloss.NewStyle().
-	Border(lipgloss.DoubleBorder()).
-	Padding(1).
-	Width(60).
-	Align(lipgloss.Center)
-
 type PasswordModel struct {
 	textinput textinput.Model
 	show      bool
@@ -34,8 +28,10 @@ func (m PasswordModel) Init() tea.Cmd {
 }
 
 func (m PasswordModel) Update(msg tea.Msg) (PasswordModel, tea.Cmd) {
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
 	if m.show {
 		switch msg := msg.(type) {
@@ -45,24 +41,17 @@ func (m PasswordModel) Update(msg tea.Msg) (PasswordModel, tea.Cmd) {
 				m.show = false
 				m.FlushCallbacks()
 				cmds = append(cmds, func() tea.Msg {
-					return BlurDialogMsg{}
-				})
-				cmds = append(cmds, func() tea.Msg {
-					return UpdateLayoutMsg{}
-				})
+					return BlurPasswordDialogMsg{}
+				}, updateLayoutCmd())
 			case "enter":
 				m.show = false
 				cmds = append(cmds, func() tea.Msg {
-					return BlurDialogMsg{}
-				})
-				cmds = append(cmds, m.CallbackInBatch())
-				cmds = append(cmds, func() tea.Msg {
-					return UpdateLayoutMsg{}
-				})
+					return BlurPasswordDialogMsg{}
+				}, m.CallbackInBatch(), updateLayoutCmd())
 				m.FlushCallbacks()
 			}
 		case passwordInputStartMsg:
-			m.PushCallback(msg.Callback)
+			m.PushCallback(msg.callback)
 		}
 
 		m.textinput, cmd = m.textinput.Update(msg)
@@ -74,15 +63,10 @@ func (m PasswordModel) Update(msg tea.Msg) (PasswordModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case passwordInputStartMsg:
 		m.show = true
-		m.PushCallback(msg.Callback)
-		cmds = append(cmds, tea.Batch(
-			func() tea.Msg {
-				return FocusDialogMsg{}
-			},
-			func() tea.Msg {
-				return UpdateLayoutMsg{}
-			},
-		))
+		m.PushCallback(msg.callback)
+		cmds = append(cmds, func() tea.Msg {
+			return FocusPasswordDialogMsg{}
+		}, updateLayoutCmd())
 	}
 
 	return m, tea.Batch(cmds...)
@@ -102,12 +86,12 @@ func (m PasswordModel) View() string {
 	return dialogStyle.Render(dialog)
 }
 
-func (m PasswordModel) GetSize() (x int, y int) {
+func (m PasswordModel) GetSize() (x, y int) {
 	if !m.show {
 		return 0, 0
 	}
 	fw, fh := dialogStyle.GetFrameSize()
-	return m.textinput.Width + fw, 3 + fh
+	return m.textinput.Width + fw, 2 + fh
 }
 
 func (m PasswordModel) CallbackInBatch() tea.Cmd {
@@ -117,10 +101,6 @@ func (m PasswordModel) CallbackInBatch() tea.Cmd {
 	}
 
 	return tea.Batch(cmds...)
-}
-
-func (m *PasswordModel) Show() {
-	m.show = true
 }
 
 func (m *PasswordModel) Focus() tea.Cmd {

@@ -51,7 +51,8 @@ type model struct {
 	mgrlist      components.ManagersModel
 	pkglists     map[string]*components.PackagesModel
 	out          components.OutputModel
-	dialog       components.PasswordModel
+	pdialog      components.PasswordModel
+	cdialog      components.ConfirmModel
 	prevCmd      tea.Cmd
 	globalKeyMap globalKeyMap
 	help         help.Model
@@ -65,7 +66,7 @@ func (m model) Init() tea.Cmd {
 		cmds = append(cmds, pkg.Init())
 	}
 	cmds = append(cmds, m.out.Init())
-	cmds = append(cmds, m.dialog.Init())
+	cmds = append(cmds, m.pdialog.Init())
 
 	return tea.Batch(cmds...)
 }
@@ -103,16 +104,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				pkg.Focus(false)
 			}
 		}
-	case components.FocusDialogMsg:
+	case components.FocusPasswordDialogMsg:
 		m.storePrevCmd()
 		m.mgrlist.Focus(false)
 		for _, pkg := range m.pkglists {
 			pkg.Focus(false)
 		}
-		cmds = append(cmds, m.dialog.Focus())
+		cmds = append(cmds, m.pdialog.Focus())
 		m.globalKeyMap = newGlobalKeyMap(m.keyMap, m.out)
-	case components.BlurDialogMsg:
-		m.dialog.Blur()
+	case components.BlurPasswordDialogMsg:
+		m.pdialog.Blur()
+		cmds = append(cmds, m.prevCmd)
+		m.prevCmd = nil
+	case components.FocusConfirmDialogMsg:
+		m.storePrevCmd()
+		m.mgrlist.Focus(false)
+		for _, pkg := range m.pkglists {
+			pkg.Focus(false)
+		}
+		m.globalKeyMap = newGlobalKeyMap(m.keyMap, m.out)
+	case components.BlurConfirmDialogMsg:
 		cmds = append(cmds, m.prevCmd)
 		m.prevCmd = nil
 	}
@@ -129,7 +140,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.out, cmd = m.out.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.dialog, cmd = m.dialog.Update(msg)
+	m.cdialog, cmd = m.cdialog.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.pdialog, cmd = m.pdialog.Update(msg)
 	cmds = append(cmds, cmd)
 
 	m.help, cmd = m.help.Update(msg)
@@ -147,10 +161,18 @@ func (m model) View() string {
 	}
 	rightBottom := borderStyle.Render(m.out.View())
 
+	dialog := ""
+	if x, _ := m.cdialog.GetSize(); x > 0 {
+		dialog = m.cdialog.View()
+	}
+	if x, _ := m.pdialog.GetSize(); x > 0 {
+		dialog = m.pdialog.View()
+	}
+
 	right := lipgloss.JoinVertical(
 		lipgloss.Left,
 		rightTop,
-		m.dialog.View(),
+		dialog,
 		rightBottom,
 	)
 
@@ -176,12 +198,13 @@ func (m *model) updateLayout(w, h int) {
 
 	dfw, dfh := docStyle.GetFrameSize()
 	bfw, bfh := borderStyle.GetFrameSize()
-	_, dh := m.dialog.GetSize()
+	_, pdh := m.pdialog.GetSize()
+	_, cdh := m.cdialog.GetSize()
 
 	m.mgrlist.SetSize(leftWidth-dfw, h-dfh)
 
 	for _, l := range m.pkglists {
-		l.SetSize(rightWidth-dfw, rightHeight-dfh-dh)
+		l.SetSize(rightWidth-dfw, rightHeight-dfh-pdh-cdh)
 	}
 
 	m.out.SetSize(rightWidth-bfw, rightHeight-bfh)
@@ -249,13 +272,14 @@ func main() {
 	out := components.NewOutputModel()
 	log.SetOutput(out.GetLogWriter())
 
-	dialog := components.NewPasswordModel()
+	pdialog := components.NewPasswordModel()
+	cdialog := components.NewConfirmModel()
 
 	km := newMainKeyMap()
 	globalKeyMap := newGlobalKeyMap(km, mgrlist, out)
 	help := help.New()
 
-	m := model{km, 0, 0, false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out, dialog, nil, globalKeyMap, help}
+	m := model{km, 0, 0, false, PACKAGE_MANAGER_APT, mgrlist, pkglists, out, pdialog, cdialog, nil, globalKeyMap, help}
 	if _, err := tea.NewProgram(m, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

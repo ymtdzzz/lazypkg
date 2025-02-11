@@ -35,7 +35,12 @@ type updatePackagesFinishMsg struct {
 }
 
 type passwordInputStartMsg struct {
-	Callback func(password string) tea.Cmd
+	callback func(password string) tea.Cmd
+}
+
+type showDialogMsg struct {
+	msg      string
+	callback tea.Cmd
 }
 
 type FocusManagersMsg struct{}
@@ -44,6 +49,10 @@ type FocusPackagesMsg struct {
 	Name string
 }
 
-type FocusDialogMsg struct{}
+type FocusPasswordDialogMsg struct{}
 
-type BlurDialogMsg struct{}
+type BlurPasswordDialogMsg struct{}
+
+type FocusConfirmDialogMsg struct{}
+
+type BlurConfirmDialogMsg struct{}

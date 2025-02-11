@@ -176,21 +176,27 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 					for i := range m.selection {
 						m.selection[i] = false
 					}
-					cmds = append(cmds, tea.Sequence(
-						func() tea.Msg {
-							return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
-						},
-						m.BulkUpdatePackageCmd(pkgs),
+					cmds = append(cmds, showDialogCmd(
+						fmt.Sprintf("Selected %d packages will be updated", len(pkgs)),
+						tea.Sequence(
+							func() tea.Msg {
+								return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
+							},
+							m.BulkUpdatePackageCmd(pkgs),
+						),
 					))
 				} else {
 					// Single update
 					if item := m.list.SelectedItem(); item != nil {
 						pkg := item.FilterValue()
-						cmds = append(cmds, tea.Sequence(
-							func() tea.Msg {
-								return updatePackagesStartMsg{name: m.name, pkgs: []string{pkg}}
-							},
-							m.UpdatePackageCmd(pkg),
+						cmds = append(cmds, showDialogCmd(
+							fmt.Sprintf("Package %s will be updated", pkg),
+							tea.Sequence(
+								func() tea.Msg {
+									return updatePackagesStartMsg{name: m.name, pkgs: []string{pkg}}
+								},
+								m.UpdatePackageCmd(pkg),
+							),
 						))
 					}
 				}
@@ -200,11 +206,14 @@ func (m PackagesModel) Update(msg tea.Msg) (PackagesModel, tea.Cmd) {
 					pkgs = append(pkgs, k)
 				}
 				if len(pkgs) > 0 {
-					cmds = append(cmds, tea.Sequence(
-						func() tea.Msg {
-							return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
-						},
-						m.BulkUpdatePackageCmd(pkgs),
+					cmds = append(cmds, showDialogCmd(
+						fmt.Sprintf("All %d packages will be updated", len(pkgs)),
+						tea.Sequence(
+							func() tea.Msg {
+								return updatePackagesStartMsg{name: m.name, pkgs: pkgs}
+							},
+							m.BulkUpdatePackageCmd(pkgs),
+						),
 					))
 				}
 			}
@@ -267,7 +276,7 @@ func (m *PackagesModel) UpdatePackageCmd(pkg string) tea.Cmd {
 		err := m.executor.Update(pkg, "")
 		if err == executors.PasswordErr {
 			return passwordInputStartMsg{
-				Callback: func(password string) tea.Cmd {
+				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {
 						err := m.executor.Update(pkg, password)
 						if err != nil {
@@ -296,7 +305,7 @@ func (m *PackagesModel) BulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 		err := m.executor.BulkUpdate(pkgs, "")
 		if err == executors.PasswordErr {
 			return passwordInputStartMsg{
-				Callback: func(password string) tea.Cmd {
+				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {
 						err := m.executor.BulkUpdate(pkgs, password)
 						if err != nil {
