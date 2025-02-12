@@ -99,6 +99,10 @@ func NewPackageModel(config Config, name string, executor executors.Executor) Pa
 	}
 }
 
+func (m PackagesModel) Valid() bool {
+	return m.executor.Valid()
+}
+
 func (m PackagesModel) Init() tea.Cmd {
 	return m.spinner.Tick
 }

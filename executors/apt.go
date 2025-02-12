@@ -14,6 +14,10 @@ var aptPattern = regexp.MustCompile(`^([a-zA-Z0-9\+\-\.]+)\/([^\s]+)\s+([a-zA-Z0
 
 type AptExecutor struct{}
 
+func (ae *AptExecutor) Valid() bool {
+	return cmdExists("apt")
+}
+
 func (ae *AptExecutor) GetPackages() ([]*PackageInfo, error) {
 	var packages []*PackageInfo
 

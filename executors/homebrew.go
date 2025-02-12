@@ -13,7 +13,11 @@ var homebrewPattern = regexp.MustCompile(`(\S+) \(([^)]+)\) < (\S+)`)
 
 type HomebrewExecutor struct{}
 
-func (ae *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
+func (he *HomebrewExecutor) Valid() bool {
+	return cmdExists("brew")
+}
+
+func (he *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
 	var packages []*PackageInfo
 
 	// check for update
@@ -43,7 +47,7 @@ func (ae *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
 	return packages, nil
 }
 
-func (ae *HomebrewExecutor) Update(pkg, _ string, dryRun bool) error {
+func (he *HomebrewExecutor) Update(pkg, _ string, dryRun bool) error {
 	cmds := []string{"brew", "upgrade"}
 	if dryRun {
 		cmds = append(cmds, "--dry-run")
@@ -75,7 +79,7 @@ func (ae *HomebrewExecutor) Update(pkg, _ string, dryRun bool) error {
 	return nil
 }
 
-func (ae *HomebrewExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) error {
+func (he *HomebrewExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) error {
 	cmds := []string{"brew", "upgrade"}
 	if dryRun {
 		cmds = append(cmds, "--dry-run")

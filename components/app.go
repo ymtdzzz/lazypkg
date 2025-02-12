@@ -1,7 +1,10 @@
 package components
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"sort"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -13,6 +16,17 @@ import (
 const (
 	PACKAGE_MANAGER_APT      = "apt"
 	PACKAGE_MANAGER_HOMEBREW = "homebrew"
+)
+
+var (
+	docStyle = lipgloss.NewStyle().
+			Margin(1, 2)
+	docStyleRightBorder = docStyle.
+				Border(lipgloss.NormalBorder(), false, true, false, false)
+	borderStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder(), true, false, false, false).
+			Padding(1)
+	helpStyle = lipgloss.NewStyle().PaddingLeft(2)
 )
 
 type mainKeyMap struct {
@@ -27,17 +41,6 @@ func newMainKeyMap() mainKeyMap {
 		),
 	}
 }
-
-var (
-	docStyle = lipgloss.NewStyle().
-			Margin(1, 2)
-	docStyleRightBorder = docStyle.
-				Border(lipgloss.NormalBorder(), false, true, false, false)
-	borderStyle = lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), true, false, false, false).
-			Padding(1)
-	helpStyle = lipgloss.NewStyle().PaddingLeft(2)
-)
 
 type AppModel struct {
 	config       Config
@@ -57,15 +60,30 @@ type AppModel struct {
 func NewAppModel(config Config) AppModel {
 	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, &executors.AptExecutor{})
 	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, &executors.HomebrewExecutor{})
-	pkglists := map[string]*PackagesModel{
+
+	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
 	}
-
-	mgrlist := NewManagersModel([]string{
-		PACKAGE_MANAGER_APT,
-		PACKAGE_MANAGER_HOMEBREW,
-	}, pkglists)
+	var (
+		pkglists = map[string]*PackagesModel{}
+		mgrs     []string
+	)
+	for k, m := range baseMgrs {
+		if !m.Valid() {
+			continue
+		}
+		pkglists[k] = m
+		mgrs = append(mgrs, k)
+	}
+	if len(mgrs) == 0 {
+		fmt.Println("No pacakge managers are detected")
+		os.Exit(0)
+	}
+	sort.Slice(mgrs, func(i, j int) bool {
+		return mgrs[i] < mgrs[j]
+	})
+	mgrlist := NewManagersModel(mgrs, pkglists)
 	mgrlist.Focus(true)
 
 	out := NewOutputModel()
@@ -82,7 +100,7 @@ func NewAppModel(config Config) AppModel {
 		config: config,
 		keyMap: km,
 		w:      0, h: 0,
-		selectedPkg:  PACKAGE_MANAGER_APT,
+		selectedPkg:  mgrs[0],
 		mgrlist:      mgrlist,
 		pkglists:     pkglists,
 		out:          out,
