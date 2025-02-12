@@ -43,8 +43,12 @@ func (ae *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
 	return packages, nil
 }
 
-func (ae *HomebrewExecutor) Update(pkg, _ string) error {
-	cmds := []string{"brew", "upgrade", "--dry-run", pkg}
+func (ae *HomebrewExecutor) Update(pkg, _ string, dryRun bool) error {
+	cmds := []string{"brew", "upgrade"}
+	if dryRun {
+		cmds = append(cmds, "--dry-run")
+	}
+	cmds = append(cmds, pkg)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
 	cmd := exec.Command(cmds[0], cmds[1:]...)
@@ -71,8 +75,11 @@ func (ae *HomebrewExecutor) Update(pkg, _ string) error {
 	return nil
 }
 
-func (ae *HomebrewExecutor) BulkUpdate(pkgs []string, password string) error {
-	cmds := []string{"brew", "upgrade", "--dry-run"}
+func (ae *HomebrewExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) error {
+	cmds := []string{"brew", "upgrade"}
+	if dryRun {
+		cmds = append(cmds, "--dry-run")
+	}
 	cmds = append(cmds, pkgs...)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))

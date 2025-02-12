@@ -40,6 +40,7 @@ func newPackagesKeyMap() packagesKeyMap {
 }
 
 type PackagesModel struct {
+	config     Config
 	keyMap     packagesKeyMap
 	spinner    spinner.Model
 	spinnerStr *string
@@ -53,7 +54,7 @@ type PackagesModel struct {
 	loading    map[int]bool
 }
 
-func NewPackageModel(name string, executor executors.Executor) PackagesModel {
+func NewPackageModel(config Config, name string, executor executors.Executor) PackagesModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	ss := s.View()
@@ -73,7 +74,6 @@ func NewPackageModel(name string, executor executors.Executor) PackagesModel {
 	l.SetShowHelp(false)
 	l.DisableQuitKeybindings()
 	l.Styles.Title = blurTitleStyle
-	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	km := newPackagesKeyMap()
 	l.AdditionalShortHelpKeys = func() []key.Binding {
@@ -84,6 +84,7 @@ func NewPackageModel(name string, executor executors.Executor) PackagesModel {
 	}
 
 	return PackagesModel{
+		config:     config,
 		keyMap:     km,
 		name:       name,
 		spinner:    s,
@@ -299,12 +300,12 @@ func (m *PackagesModel) getPackagesCmd() tea.Cmd {
 
 func (m *PackagesModel) updatePackageCmd(pkg string) tea.Cmd {
 	return func() tea.Msg {
-		err := m.executor.Update(pkg, "")
+		err := m.executor.Update(pkg, "", m.config.DryRun)
 		if err == executors.PasswordErr {
 			return passwordInputStartMsg{
 				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {
-						err := m.executor.Update(pkg, password)
+						err := m.executor.Update(pkg, password, m.config.DryRun)
 						if err != nil {
 							m.log(fmt.Sprintf("Error update pacakge (after password input): %v", err))
 						}
@@ -328,12 +329,12 @@ func (m *PackagesModel) updatePackageCmd(pkg string) tea.Cmd {
 
 func (m *PackagesModel) bulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 	return func() tea.Msg {
-		err := m.executor.BulkUpdate(pkgs, "")
+		err := m.executor.BulkUpdate(pkgs, "", m.config.DryRun)
 		if err == executors.PasswordErr {
 			return passwordInputStartMsg{
 				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {
-						err := m.executor.BulkUpdate(pkgs, password)
+						err := m.executor.BulkUpdate(pkgs, password, m.config.DryRun)
 						if err != nil {
 							m.log(fmt.Sprintf("Error update pacakge (after password input): %v", err))
 						}

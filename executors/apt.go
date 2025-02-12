@@ -37,8 +37,12 @@ func (ae *AptExecutor) GetPackages() ([]*PackageInfo, error) {
 	return packages, nil
 }
 
-func (ae *AptExecutor) Update(pkg, password string) error {
-	cmds := []string{"sudo", "-S", "apt", "install", "--dry-run", "--only-upgrade", pkg}
+func (ae *AptExecutor) Update(pkg, password string, dryRun bool) error {
+	cmds := []string{"sudo", "-S", "apt", "install", "--only-upgrade"}
+	if dryRun {
+		cmds = append(cmds, "--dry-run")
+	}
+	cmds = append(cmds, pkg)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
 	cmd := exec.Command(cmds[0], cmds[1:]...)
@@ -78,8 +82,11 @@ func (ae *AptExecutor) Update(pkg, password string) error {
 	return nil
 }
 
-func (ae *AptExecutor) BulkUpdate(pkgs []string, password string) error {
-	cmds := []string{"sudo", "-S", "apt", "install", "--dry-run", "--only-upgrade"}
+func (ae *AptExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) error {
+	cmds := []string{"sudo", "-S", "apt", "install", "--only-upgrade"}
+	if dryRun {
+		cmds = append(cmds, "--dry-run")
+	}
 	cmds = append(cmds, pkgs...)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))

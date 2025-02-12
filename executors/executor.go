@@ -12,6 +12,6 @@ type PackageInfo struct {
 
 type Executor interface {
 	GetPackages() ([]*PackageInfo, error)
-	Update(pkg, password string) error
-	BulkUpdate(pkgs []string, password string) error
+	Update(pkg, password string, dryRun bool) error
+	BulkUpdate(pkgs []string, password string, dryRun bool) error
 }

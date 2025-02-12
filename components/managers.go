@@ -76,7 +76,6 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	l.SetShowHelp(false)
 	l.DisableQuitKeybindings()
 	l.Styles.Title = blurTitleStyle
-	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	km := newManagersKeyMap()
 	l.AdditionalShortHelpKeys = func() []key.Binding {
