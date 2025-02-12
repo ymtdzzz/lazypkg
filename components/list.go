@@ -13,6 +13,7 @@ var (
 	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	blurTitleStyle    = titleStyle.Foreground(lipgloss.Color("#777777"))
 	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	itemDescStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#777777"))
 	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 )
 
@@ -54,7 +55,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	if v, ok := d.selection[index]; ok && v {
 		check = "*"
 	}
-	str := fmt.Sprintf("%s %s %s", check, i.title, i.desc)
+	str := fmt.Sprintf("%s %s %s", check, i.title, itemDescStyle.Render(i.desc))
 	if v, ok := d.loading[index]; ok && v {
 		str = str + " " + *d.spinnerStr
 	}

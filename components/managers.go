@@ -10,9 +10,11 @@ import (
 )
 
 type managersKeyMap struct {
-	Toggle key.Binding
-	Select key.Binding
-	Update key.Binding
+	Toggle   key.Binding
+	Select   key.Binding
+	Check    key.Binding
+	CheckAll key.Binding
+	Update   key.Binding
 }
 
 func newManagersKeyMap() managersKeyMap {
@@ -24,6 +26,14 @@ func newManagersKeyMap() managersKeyMap {
 		Select: key.NewBinding(
 			key.WithKeys("enter", "right", "l"),
 			key.WithHelp("enter | l | →", "select"),
+		),
+		Check: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "check update"),
+		),
+		CheckAll: key.NewBinding(
+			key.WithKeys("R"),
+			key.WithHelp("R", "check update (all)"),
 		),
 		Update: key.NewBinding(
 			key.WithKeys("u"),
@@ -146,6 +156,16 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 					m.selection[idx] = false
 				} else {
 					m.selection[idx] = true
+				}
+			case key.Matches(msg, m.keyMap.Check):
+				if item := m.list.SelectedItem(); item != nil {
+					if pkg, ok := m.pkglists[item.FilterValue()]; ok {
+						cmds = append(cmds, pkg.getPackagesCmd())
+					}
+				}
+			case key.Matches(msg, m.keyMap.CheckAll):
+				for _, pkg := range m.pkglists {
+					cmds = append(cmds, pkg.getPackagesCmd())
 				}
 			case key.Matches(msg, m.keyMap.Update):
 				// Bulk update

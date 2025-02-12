@@ -291,8 +291,20 @@ func (m *PackagesModel) getPackagesCmd() tea.Cmd {
 			return getPackageStartMsg{name: m.name}
 		},
 		func() tea.Msg {
-			pkgs, err := m.executor.GetPackages()
-			if err != nil {
+			pkgs, err := m.executor.GetPackages("")
+			if err == executors.PasswordErr {
+				return passwordInputStartMsg{
+					callback: func(password string) tea.Cmd {
+						return func() tea.Msg {
+							pkgs, err := m.executor.GetPackages(password)
+							if err != nil {
+								m.log(fmt.Sprintf("Error fetching packages (after password input): %v", err))
+							}
+							return packageUpdateMsg{m.name, getPackageItems(pkgs)}
+						}
+					},
+				}
+			} else if err != nil {
 				m.log(fmt.Sprintf("Error fetching packages: %v", err))
 				pkgs = []*executors.PackageInfo{}
 			}
@@ -365,7 +377,7 @@ func (m *PackagesModel) bulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 func getPackageItems(pkgs []*executors.PackageInfo) []list.Item {
 	rows := []list.Item{}
 	for _, pkg := range pkgs {
-		desc := fmt.Sprintf("%s %s", pkg.Version, pkg.Arch)
+		desc := fmt.Sprintf("\t(%s -> %s)", pkg.OldVersion, pkg.NewVersion)
 		rows = append(rows, item{
 			title: pkg.Name,
 			desc:  desc,

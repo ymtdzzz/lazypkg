@@ -17,7 +17,7 @@ func (he *HomebrewExecutor) Valid() bool {
 	return cmdExists("brew")
 }
 
-func (he *HomebrewExecutor) GetPackages() ([]*PackageInfo, error) {
+func (he *HomebrewExecutor) GetPackages(_ string) ([]*PackageInfo, error) {
 	var packages []*PackageInfo
 
 	// check for update
@@ -117,8 +117,8 @@ func homebrewPackageFromString(input string) (*PackageInfo, error) {
 		return nil, fmt.Errorf("invalid input provided: %s", input)
 	}
 	return &PackageInfo{
-		Name:    matches[1],
-		Version: matches[2],
-		Arch:    "",
+		Name:       matches[1],
+		OldVersion: matches[2],
+		NewVersion: matches[3],
 	}, nil
 }

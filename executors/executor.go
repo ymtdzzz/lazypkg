@@ -8,13 +8,13 @@ import (
 var PasswordErr = errors.New("password is required")
 
 type PackageInfo struct {
-	Name    string
-	Version string
-	Arch    string
+	Name       string
+	OldVersion string
+	NewVersion string
 }
 
 type Executor interface {
-	GetPackages() ([]*PackageInfo, error)
+	GetPackages(password string) ([]*PackageInfo, error)
 	Update(pkg, password string, dryRun bool) error
 	BulkUpdate(pkgs []string, password string, dryRun bool) error
 	Valid() bool
