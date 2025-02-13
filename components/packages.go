@@ -73,6 +73,9 @@ func NewPackageModel(config Config, name string, executor executors.Executor) Pa
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)
 	l.DisableQuitKeybindings()
+	// Disable next/prev page in paginator
+	l.KeyMap.NextPage = key.Binding{}
+	l.KeyMap.PrevPage = key.Binding{}
 	l.Styles.Title = blurTitleStyle
 	l.Styles.HelpStyle = helpStyle
 	km := newPackagesKeyMap()
