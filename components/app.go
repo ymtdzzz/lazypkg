@@ -16,6 +16,7 @@ import (
 const (
 	PACKAGE_MANAGER_APT      = "apt"
 	PACKAGE_MANAGER_HOMEBREW = "homebrew"
+	PACKAGE_MANAGER_DOCKER   = "docker"
 )
 
 var (
@@ -57,13 +58,19 @@ type AppModel struct {
 	help         help.Model
 }
 
-func NewAppModel(config Config) AppModel {
+func NewAppModel(config Config) (AppModel, error) {
 	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, &executors.AptExecutor{})
 	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, &executors.HomebrewExecutor{})
+	de, err := executors.NewDockerExecutor()
+	if err != nil {
+		return AppModel{}, err
+	}
+	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, de)
 
 	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
+		PACKAGE_MANAGER_DOCKER:   &docker,
 	}
 	var (
 		pkglists = map[string]*PackagesModel{}
@@ -109,7 +116,7 @@ func NewAppModel(config Config) AppModel {
 		prevCmd:      nil,
 		globalKeyMap: globalKeyMap,
 		help:         help,
-	}
+	}, nil
 }
 
 func (m AppModel) Init() tea.Cmd {
@@ -243,6 +250,12 @@ func (m AppModel) View() string {
 	)
 
 	return layoutWithHelp
+}
+
+func (m *AppModel) Close() {
+	for _, pkg := range m.pkglists {
+		pkg.executor.Close()
+	}
 }
 
 func (m *AppModel) updateLayout(w, h int) {

@@ -21,9 +21,14 @@ func main() {
 		Short:   "A TUI package management application across package managers",
 		Version: version,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, err := tea.NewProgram(components.NewAppModel(components.Config{
+			m, err := components.NewAppModel(components.Config{
 				DryRun: dryRun,
-			}), tea.WithAltScreen()).Run()
+			})
+			if err != nil {
+				return err
+			}
+			defer m.Close()
+			_, err = tea.NewProgram(m, tea.WithAltScreen()).Run()
 			return err
 		},
 	}

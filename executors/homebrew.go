@@ -111,6 +111,8 @@ func (he *HomebrewExecutor) BulkUpdate(pkgs []string, password string, dryRun bo
 	return nil
 }
 
+func (he *HomebrewExecutor) Close() {}
+
 func homebrewPackageFromString(input string) (*PackageInfo, error) {
 	matches := homebrewPattern.FindStringSubmatch(input)
 	if len(matches) < 4 {

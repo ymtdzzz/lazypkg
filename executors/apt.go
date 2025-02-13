@@ -166,6 +166,8 @@ func (ae *AptExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) e
 	return nil
 }
 
+func (ae *AptExecutor) Close() {}
+
 func aptPackageFromString(input string) (*PackageInfo, error) {
 	matches := aptPattern.FindStringSubmatch(input)
 	if len(matches) < 6 {

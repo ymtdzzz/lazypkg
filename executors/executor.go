@@ -18,6 +18,7 @@ type Executor interface {
 	Update(pkg, password string, dryRun bool) error
 	BulkUpdate(pkgs []string, password string, dryRun bool) error
 	Valid() bool
+	Close()
 }
 
 func cmdExists(cmd string) bool {
