@@ -17,6 +17,7 @@ const (
 	PACKAGE_MANAGER_APT      = "apt"
 	PACKAGE_MANAGER_HOMEBREW = "homebrew"
 	PACKAGE_MANAGER_DOCKER   = "docker"
+	PACKAGE_MANAGER_NPM      = "npm"
 )
 
 var (
@@ -66,11 +67,13 @@ func NewAppModel(config Config) (AppModel, error) {
 		return AppModel{}, err
 	}
 	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, de)
+	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, &executors.NpmExecutor{})
 
 	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
 		PACKAGE_MANAGER_DOCKER:   &docker,
+		PACKAGE_MANAGER_NPM:      &npm,
 	}
 	var (
 		pkglists = map[string]*PackagesModel{}
