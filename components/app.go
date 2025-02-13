@@ -80,7 +80,7 @@ func NewAppModel(config Config) (AppModel, error) {
 	}
 	var (
 		pkglists = map[string]*PackagesModel{}
-		mgrs     []string
+		mgrs     = make([]string, 0, 100)
 	)
 	for k, m := range baseMgrs {
 		if !m.Valid() {
@@ -126,7 +126,7 @@ func NewAppModel(config Config) (AppModel, error) {
 }
 
 func (m AppModel) Init() tea.Cmd {
-	var cmds []tea.Cmd
+	cmds := make([]tea.Cmd, 0, 100)
 
 	cmds = append(cmds, m.mgrlist.Init())
 	for _, pkg := range m.pkglists {
@@ -140,7 +140,7 @@ func (m AppModel) Init() tea.Cmd {
 
 func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
+	cmds := make([]tea.Cmd, 0, 100)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:

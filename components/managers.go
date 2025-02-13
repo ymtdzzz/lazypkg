@@ -64,7 +64,7 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	loading := map[int]bool{}
 	focus := false
 
-	var items []list.Item
+	items := make([]list.Item, len(mgrs))
 	mgrToIdx := map[string]int{}
 	idxToMgr := map[int]string{}
 	for i, mgr := range mgrs {
@@ -81,7 +81,7 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 		0,
 		0,
 	)
-	l.Title = fmt.Sprintf("Package Managers")
+	l.Title = "Package Managers"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.SetShowHelp(false)

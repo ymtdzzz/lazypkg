@@ -46,6 +46,7 @@ func (he *NpmExecutor) Update(pkg, _ string, dryRun bool) error {
 	cmds = append(cmds, pkg)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -78,6 +79,7 @@ func (he *NpmExecutor) BulkUpdate(pkgs []string, _ string, dryRun bool) error {
 	cmds = append(cmds, pkgs...)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()

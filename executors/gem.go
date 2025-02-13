@@ -48,6 +48,7 @@ func (ge *GemExecutor) Update(pkg, _ string, dryRun bool) error {
 	}
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -81,6 +82,7 @@ func (ge *GemExecutor) BulkUpdate(pkgs []string, _ string, dryRun bool) error {
 	}
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()

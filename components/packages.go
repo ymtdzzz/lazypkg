@@ -253,7 +253,7 @@ func (m PackagesModel) Icon() rune {
 }
 
 func (m PackagesModel) updateAll(cmds []tea.Cmd, confirmed bool) []tea.Cmd {
-	var pkgs []string
+	pkgs := make([]string, len(m.pkgToIdx))
 	for k := range m.pkgToIdx {
 		pkgs = append(pkgs, k)
 	}
@@ -301,7 +301,7 @@ func (m *PackagesModel) getPackagesCmd() tea.Cmd {
 		},
 		func() tea.Msg {
 			pkgs, err := m.executor.GetPackages("")
-			if err == executors.PasswordErr {
+			if err == executors.ErrPassword {
 				return passwordInputStartMsg{
 					callback: func(password string) tea.Cmd {
 						return func() tea.Msg {
@@ -326,7 +326,7 @@ func (m *PackagesModel) getPackagesCmd() tea.Cmd {
 func (m *PackagesModel) updatePackageCmd(pkg string) tea.Cmd {
 	return func() tea.Msg {
 		err := m.executor.Update(pkg, "", m.config.DryRun)
-		if err == executors.PasswordErr {
+		if err == executors.ErrPassword {
 			return passwordInputStartMsg{
 				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {
@@ -355,7 +355,7 @@ func (m *PackagesModel) updatePackageCmd(pkg string) tea.Cmd {
 func (m *PackagesModel) bulkUpdatePackageCmd(pkgs []string) tea.Cmd {
 	return func() tea.Msg {
 		err := m.executor.BulkUpdate(pkgs, "", m.config.DryRun)
-		if err == executors.PasswordErr {
+		if err == executors.ErrPassword {
 			return passwordInputStartMsg{
 				callback: func(password string) tea.Cmd {
 					return func() tea.Msg {

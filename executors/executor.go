@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-var PasswordErr = errors.New("password is required")
+var ErrPassword = errors.New("password is required")
 
 type PackageInfo struct {
 	Name       string

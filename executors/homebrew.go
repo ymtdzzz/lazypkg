@@ -23,14 +23,14 @@ func (he *HomebrewExecutor) GetPackages(_ string) ([]*PackageInfo, error) {
 	// check for update
 	log.Print("Running brew update")
 	cmd := exec.Command("brew", "update")
-	output, err := cmd.Output()
+	_, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
 
 	log.Print("Running brew outdated --verbose")
 	cmd = exec.Command("brew", "outdated", "--verbose")
-	output, err = cmd.Output()
+	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +55,7 @@ func (he *HomebrewExecutor) Update(pkg, _ string, dryRun bool) error {
 	cmds = append(cmds, pkg)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -87,6 +88,7 @@ func (he *HomebrewExecutor) BulkUpdate(pkgs []string, password string, dryRun bo
 	cmds = append(cmds, pkgs...)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 
 	stdout, err := cmd.StdoutPipe()

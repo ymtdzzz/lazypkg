@@ -22,6 +22,7 @@ func (ae *AptExecutor) GetPackages(password string) ([]*PackageInfo, error) {
 	var packages []*PackageInfo
 	cmds := []string{"sudo", "-S", "apt", "update"}
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 	cmd.Stdin = strings.NewReader(password + "\n")
 
@@ -51,7 +52,7 @@ func (ae *AptExecutor) GetPackages(password string) ([]*PackageInfo, error) {
 
 	if err := cmd.Wait(); err != nil {
 		if passworderr {
-			return packages, PasswordErr
+			return packages, ErrPassword
 		}
 		return packages, err
 	}
@@ -84,6 +85,7 @@ func (ae *AptExecutor) Update(pkg, password string, dryRun bool) error {
 	cmds = append(cmds, pkg)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 	cmd.Stdin = strings.NewReader(password + "\n")
 
@@ -113,7 +115,7 @@ func (ae *AptExecutor) Update(pkg, password string, dryRun bool) error {
 
 	if err := cmd.Wait(); err != nil {
 		if passworderr {
-			return PasswordErr
+			return ErrPassword
 		}
 		return err
 	}
@@ -129,6 +131,7 @@ func (ae *AptExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) e
 	cmds = append(cmds, pkgs...)
 
 	log.Printf("Running %s", strings.Join(cmds, " "))
+	// #nosec G204: commands are not input values
 	cmd := exec.Command(cmds[0], cmds[1:]...)
 	cmd.Stdin = strings.NewReader(password + "\n")
 
@@ -158,7 +161,7 @@ func (ae *AptExecutor) BulkUpdate(pkgs []string, password string, dryRun bool) e
 
 	if err := cmd.Wait(); err != nil {
 		if passworderr {
-			return PasswordErr
+			return ErrPassword
 		}
 		return err
 	}

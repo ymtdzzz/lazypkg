@@ -137,7 +137,9 @@ func (de *DockerExecutor) Valid() bool {
 }
 
 func (de *DockerExecutor) Close() {
-	de.dc.Close()
+	if err := de.dc.Close(); err != nil {
+		log.Printf("Failed to close the docker client: %v", err)
+	}
 }
 
 func (de *DockerExecutor) pullImage(
@@ -179,8 +181,6 @@ func (de *DockerExecutor) pullImage(
 		mu.Unlock()
 		return
 	}
-
-	return
 }
 
 func dockerDiffPackageFromHash(imageName, localDigest, remoteDigest string) (*PackageInfo, error) {

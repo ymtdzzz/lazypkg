@@ -11,9 +11,8 @@ import (
 )
 
 type LogWriter struct {
-	mu      sync.Mutex
-	content string
-	logs    *ring.Ring
+	mu   sync.Mutex
+	logs *ring.Ring
 }
 
 func (w *LogWriter) Write(b []byte) (n int, err error) {
