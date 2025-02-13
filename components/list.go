@@ -18,6 +18,7 @@ var (
 )
 
 type item struct {
+	icon        rune
 	title, desc string
 }
 
@@ -55,7 +56,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	if v, ok := d.selection[index]; ok && v {
 		check = "*"
 	}
-	str := fmt.Sprintf("%s %s %s", check, i.title, itemDescStyle.Render(i.desc))
+	str := fmt.Sprintf("%s %c  %s %s", check, i.icon, i.title, itemDescStyle.Render(i.desc))
 	if v, ok := d.loading[index]; ok && v {
 		str = str + " " + *d.spinnerStr
 	}

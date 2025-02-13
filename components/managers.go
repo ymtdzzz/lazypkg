@@ -69,6 +69,7 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	idxToMgr := map[int]string{}
 	for i, mgr := range mgrs {
 		items = append(items, item{
+			icon:  pkglists[mgr].Icon(),
 			title: mgr,
 		})
 		mgrToIdx[mgr] = i
@@ -234,6 +235,7 @@ func (m ManagersModel) Update(msg tea.Msg) (ManagersModel, tea.Cmd) {
 				desc = fmt.Sprintf("[%d]", l.Count())
 			}
 			m.list.SetItem(i, item{
+				icon:  m.pkglists[mgr].icon,
 				title: mgr,
 				desc:  desc,
 			})

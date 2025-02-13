@@ -18,6 +18,7 @@ const (
 	PACKAGE_MANAGER_HOMEBREW = "homebrew"
 	PACKAGE_MANAGER_DOCKER   = "docker"
 	PACKAGE_MANAGER_NPM      = "npm"
+	PACKAGE_MANAGER_GEM      = "gem"
 )
 
 var (
@@ -60,20 +61,22 @@ type AppModel struct {
 }
 
 func NewAppModel(config Config) (AppModel, error) {
-	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, &executors.AptExecutor{})
-	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, &executors.HomebrewExecutor{})
+	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, '\uebc6', &executors.AptExecutor{})
+	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, '\uf0fc', &executors.HomebrewExecutor{})
 	de, err := executors.NewDockerExecutor()
 	if err != nil {
 		return AppModel{}, err
 	}
-	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, de)
-	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, &executors.NpmExecutor{})
+	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, '\uf21f', de)
+	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, '\ued0d', &executors.NpmExecutor{})
+	gem := NewPackageModel(config, PACKAGE_MANAGER_GEM, '\uf219', &executors.GemExecutor{})
 
 	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
 		PACKAGE_MANAGER_DOCKER:   &docker,
 		PACKAGE_MANAGER_NPM:      &npm,
+		PACKAGE_MANAGER_GEM:      &gem,
 	}
 	var (
 		pkglists = map[string]*PackagesModel{}

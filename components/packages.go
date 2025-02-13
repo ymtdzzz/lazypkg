@@ -45,6 +45,7 @@ type PackagesModel struct {
 	spinner    spinner.Model
 	spinnerStr *string
 	name       string
+	icon       rune
 	executor   executors.Executor
 	pkgToIdx   map[string]int
 	idxToPkg   map[int]string
@@ -54,7 +55,7 @@ type PackagesModel struct {
 	loading    map[int]bool
 }
 
-func NewPackageModel(config Config, name string, executor executors.Executor) PackagesModel {
+func NewPackageModel(config Config, name string, icon rune, executor executors.Executor) PackagesModel {
 	s := spinner.New()
 	s.Spinner = spinner.Line
 	ss := s.View()
@@ -90,6 +91,7 @@ func NewPackageModel(config Config, name string, executor executors.Executor) Pa
 		config:     config,
 		keyMap:     km,
 		name:       name,
+		icon:       icon,
 		spinner:    s,
 		spinnerStr: &ss,
 		executor:   executor,
@@ -244,6 +246,10 @@ func (m PackagesModel) FullHelp() [][]key.Binding {
 
 func (m PackagesModel) Count() int {
 	return len(m.list.Items())
+}
+
+func (m PackagesModel) Icon() rune {
+	return m.icon
 }
 
 func (m PackagesModel) updateAll(cmds []tea.Cmd, confirmed bool) []tea.Cmd {
