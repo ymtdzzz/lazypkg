@@ -265,6 +265,9 @@ func (m *AppModel) updateLayout(w, h int) {
 	leftWidth := int(float64(w) * 0.4)
 	rightWidth := w - leftWidth
 	rightHeight := h / 2
+	if h%2 == 1 {
+		rightHeight -= 1
+	}
 
 	dfw, dfh := docStyle.GetFrameSize()
 	bfw, bfh := borderStyle.GetFrameSize()
