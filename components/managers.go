@@ -64,7 +64,7 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	loading := map[int]bool{}
 	focus := false
 
-	items := make([]list.Item, len(mgrs))
+	items := make([]list.Item, 0, len(mgrs))
 	mgrToIdx := map[string]int{}
 	idxToMgr := map[int]string{}
 	for i, mgr := range mgrs {

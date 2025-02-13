@@ -253,7 +253,7 @@ func (m PackagesModel) Icon() rune {
 }
 
 func (m PackagesModel) updateAll(cmds []tea.Cmd, confirmed bool) []tea.Cmd {
-	pkgs := make([]string, len(m.pkgToIdx))
+	pkgs := make([]string, 0, len(m.pkgToIdx))
 	for k := range m.pkgToIdx {
 		pkgs = append(pkgs, k)
 	}

@@ -80,7 +80,7 @@ func NewAppModel(config Config) (AppModel, error) {
 	}
 	var (
 		pkglists = map[string]*PackagesModel{}
-		mgrs     = make([]string, 0, 100)
+		mgrs     = make([]string, 0, len(baseMgrs))
 	)
 	for k, m := range baseMgrs {
 		if !m.Valid() {

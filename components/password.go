@@ -97,7 +97,7 @@ func (m PasswordModel) GetSize() (x, y int) {
 }
 
 func (m PasswordModel) CallbackInBatch() tea.Cmd {
-	cmds := make([]tea.Cmd, len(m.callbacks))
+	cmds := make([]tea.Cmd, 0, len(m.callbacks))
 	for _, c := range m.callbacks {
 		cmds = append(cmds, c(m.textinput.Value()))
 	}
