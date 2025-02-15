@@ -90,10 +90,10 @@ func NewManagersModel(mgrs []string, pkglists map[string]*PackagesModel) Manager
 	l.Styles.HelpStyle = helpStyle
 	km := newManagersKeyMap()
 	l.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle, km.Select}
+		return []key.Binding{km.Toggle, km.Select, km.Check, km.CheckAll, km.Update}
 	}
 	l.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{km.Toggle, km.Select}
+		return []key.Binding{km.Toggle, km.Select, km.Check, km.CheckAll, km.Update}
 	}
 
 	return ManagersModel{
