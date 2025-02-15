@@ -1,12 +1,15 @@
 package components
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type ConfirmModel struct {
 	msg      string
+	maxlen   int
 	show     bool
 	callback tea.Cmd
 }
@@ -40,13 +43,11 @@ func (m ConfirmModel) Update(msg tea.Msg) (ConfirmModel, tea.Cmd) {
 				m.callback = nil
 			}
 		}
-
-		return m, tea.Batch(cmds...)
 	}
 
 	switch msg := msg.(type) {
 	case showDialogMsg:
-		m.msg = msg.msg
+		m.msg, m.maxlen = wrapText(msg.msg, DIALOG_MAX_LINE_LENGTH)
 		m.callback = msg.callback
 		m.show = true
 		cmds = append(cmds, func() tea.Msg {
@@ -64,7 +65,7 @@ func (m ConfirmModel) View() string {
 
 	dialog := lipgloss.JoinVertical(lipgloss.Center,
 		m.msg,
-		"[Enter] OK  [Esc] Cancel",
+		"\n[Enter] OK  [Esc] Cancel",
 	)
 
 	return dialogStyle.Render(dialog)
@@ -75,5 +76,5 @@ func (m ConfirmModel) GetSize() (x, y int) {
 		return 0, 0
 	}
 	fw, fh := dialogStyle.GetFrameSize()
-	return len(m.msg) + fw, 2 + fh
+	return DIALOG_WIDTH + fw, strings.Count(m.msg, "\n") + 3 + fh // 2 = line count + new line + button row
 }
