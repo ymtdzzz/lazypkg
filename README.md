@@ -29,6 +29,33 @@ Flags:
   -v, --version   version for lazypkg
 ```
 
+## Keymap
+
+#### Package Managers List (Side Bar)
+| Key            | Action |
+|---------------|--------|
+| `↑` / `↓` / `j` / `k` | Move cursor |
+| `Enter` / `l` / `→` | Select and enter Packages list |
+| `r` | Check for updates (current package manager) |
+| `R` | Check for updates (all package managers) |
+| `Space` | Multi-select |
+| `u` | Update packages (current or selected package managers) |
+
+#### Packages List
+| Key            | Action |
+|---------------|--------|
+| `↑` / `↓` / `j` / `k` | Move cursor |
+| `Backspace` / `h` / `←` | Return to Package Managers List |
+| `Space` | Multi-select |
+| `u` | Update packages (current or selected) |
+| `U` | Update all displayed packages |
+
+#### Global
+| Key            | Action |
+|---------------|--------|
+| `q` | Quit |
+| `Ctrl+j` / `Ctrl+k` | Scroll logs |
+
 ## Getting Started
 
 ### Prerequisite
