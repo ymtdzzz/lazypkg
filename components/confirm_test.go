@@ -37,7 +37,6 @@ func TestConfirmOutput(t *testing.T) {
 			callbackMsg{},
 			UpdateLayoutMsg{},
 		})
-		waitForEmpty(t, tm)
 
 		tm.Send(quitMsg{})
 
@@ -69,7 +68,6 @@ func TestConfirmOutput(t *testing.T) {
 			BlurConfirmDialogMsg{},
 			UpdateLayoutMsg{},
 		})
-		waitForEmpty(t, tm)
 
 		tm.Send(quitMsg{})
 

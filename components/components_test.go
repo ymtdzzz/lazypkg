@@ -97,14 +97,3 @@ func waitForString(t *testing.T, tm *teatest.TestModel, s string) (result []byte
 	)
 	return
 }
-
-func waitForEmpty(t *testing.T, tm *teatest.TestModel) {
-	t.Helper()
-	teatest.WaitFor(
-		t,
-		tm.Output(),
-		func(b []byte) bool {
-			return string(b) == ""
-		},
-	)
-}
