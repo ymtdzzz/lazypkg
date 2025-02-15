@@ -63,14 +63,11 @@ func (wm wrappedModel) View() string {
 func (wm wrappedModel) waitForMsgs(t *testing.T, targets []any) {
 	t.Helper()
 
-	receivedMsgs := make([]any, 0, len(targets))
-
 	for len(targets) > 0 {
 		select {
 		case msg := <-wm.msgChan:
 			for i, target := range targets {
 				if reflect.TypeOf(target) == reflect.TypeOf(msg) {
-					receivedMsgs = append(receivedMsgs, msg)
 					targets = append(targets[:i], targets[i+1:]...)
 					break
 				}
@@ -110,5 +107,4 @@ func waitForEmpty(t *testing.T, tm *teatest.TestModel) {
 			return string(b) == ""
 		},
 	)
-	return
 }
