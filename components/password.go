@@ -68,7 +68,7 @@ func (m PasswordModel) Update(msg tea.Msg) (PasswordModel, tea.Cmd) {
 		m.PushCallback(msg.callback)
 		cmds = append(cmds, func() tea.Msg {
 			return FocusPasswordDialogMsg{}
-		}, updateLayoutCmd())
+		}, updateLayoutCmd(), m.Focus())
 	}
 
 	return m, tea.Batch(cmds...)
@@ -82,7 +82,7 @@ func (m PasswordModel) View() string {
 	dialog := lipgloss.JoinVertical(lipgloss.Center,
 		"Enter your password to proceed",
 		m.textinput.View(),
-		"[Enter] OK  [Esc] Cancel",
+		"\n[Enter] OK  [Esc] Cancel",
 	)
 
 	return dialogStyle.Render(dialog)
@@ -93,7 +93,7 @@ func (m PasswordModel) GetSize() (x, y int) {
 		return 0, 0
 	}
 	fw, fh := dialogStyle.GetFrameSize()
-	return m.textinput.Width + fw, 2 + fh
+	return m.textinput.Width + fw, 3 + fh
 }
 
 func (m PasswordModel) CallbackInBatch() tea.Cmd {

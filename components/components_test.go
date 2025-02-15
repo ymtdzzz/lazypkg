@@ -24,14 +24,14 @@ func newWrappedModel(model any) (wrappedModel, chan tea.Msg) {
 }
 
 func (wm wrappedModel) Init() tea.Cmd {
-	var cmd tea.Cmd
-
 	switch m := wm.model.(type) {
 	case ConfirmModel:
 		return m.Init()
+	case PasswordModel:
+		return m.Init()
 	}
 
-	return cmd
+	return nil
 }
 func (wm wrappedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -46,6 +46,8 @@ func (wm wrappedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := wm.model.(type) {
 	case ConfirmModel:
 		wm.model, cmd = m.Update(msg)
+	case PasswordModel:
+		wm.model, cmd = m.Update(msg)
 	}
 
 	return wm, cmd
@@ -54,6 +56,8 @@ func (wm wrappedModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (wm wrappedModel) View() string {
 	switch m := wm.model.(type) {
 	case ConfirmModel:
+		return m.View()
+	case PasswordModel:
 		return m.View()
 	}
 
@@ -67,7 +71,7 @@ func (wm wrappedModel) waitForMsgs(t *testing.T, targets []any) {
 		select {
 		case msg := <-wm.msgChan:
 			for i, target := range targets {
-				if reflect.TypeOf(target) == reflect.TypeOf(msg) {
+				if reflect.DeepEqual(target, msg) {
 					targets = append(targets[:i], targets[i+1:]...)
 					break
 				}
@@ -80,7 +84,9 @@ func (wm wrappedModel) waitForMsgs(t *testing.T, targets []any) {
 }
 
 type quitMsg struct{}
-type callbackMsg struct{}
+type callbackMsg struct {
+	value string
+}
 
 func waitForString(t *testing.T, tm *teatest.TestModel, s string) (result []byte) {
 	t.Helper()

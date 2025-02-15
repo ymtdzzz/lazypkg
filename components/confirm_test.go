@@ -24,6 +24,10 @@ func TestConfirmOutput(t *testing.T) {
 				},
 			),
 		})
+		wm.waitForMsgs(t, []any{
+			FocusConfirmDialogMsg{},
+			UpdateLayoutMsg{},
+		})
 
 		out := waitForString(t, tm, "Cancel")
 		teatest.RequireEqualOutput(t, out)
