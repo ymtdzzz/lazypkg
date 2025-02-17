@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -78,6 +79,17 @@ func NewAppModel(config Config) (AppModel, error) {
 		PACKAGE_MANAGER_NPM:      &npm,
 		PACKAGE_MANAGER_GEM:      &gem,
 	}
+	for exclude, _ := range config.Excludes {
+		if _, ok := baseMgrs[exclude]; !ok {
+			validValues := make([]string, 0, len(baseMgrs))
+			for value, _ := range baseMgrs {
+				validValues = append(validValues, value)
+			}
+			fmt.Printf("Invalid exclude option. Valid values: %s\n", strings.Join(validValues, ", "))
+			os.Exit(1)
+		}
+	}
+
 	var (
 		pkglists = map[string]*PackagesModel{}
 		mgrs     = make([]string, 0, len(baseMgrs))
@@ -86,11 +98,14 @@ func NewAppModel(config Config) (AppModel, error) {
 		if !m.Valid() {
 			continue
 		}
+		if v, ok := config.Excludes[k]; ok && v {
+			continue
+		}
 		pkglists[k] = m
 		mgrs = append(mgrs, k)
 	}
 	if len(mgrs) == 0 {
-		fmt.Println("No pacakge managers are detected")
+		fmt.Println("No package managers are available")
 		os.Exit(0)
 	}
 	sort.Slice(mgrs, func(i, j int) bool {
