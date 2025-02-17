@@ -79,10 +79,10 @@ func NewAppModel(config Config) (AppModel, error) {
 		PACKAGE_MANAGER_NPM:      &npm,
 		PACKAGE_MANAGER_GEM:      &gem,
 	}
-	for exclude, _ := range config.Excludes {
+	for exclude := range config.Excludes {
 		if _, ok := baseMgrs[exclude]; !ok {
 			validValues := make([]string, 0, len(baseMgrs))
-			for value, _ := range baseMgrs {
+			for value := range baseMgrs {
 				validValues = append(validValues, value)
 			}
 			fmt.Printf("Invalid exclude option. Valid values: %s\n", strings.Join(validValues, ", "))
