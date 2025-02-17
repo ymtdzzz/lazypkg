@@ -24,9 +24,10 @@ Usage:
   lazypkg [flags]
 
 Flags:
-      --dry-run   Perform update commands with --dry-run option
-  -h, --help      help for lazypkg
-  -v, --version   version for lazypkg
+      --dry-run               Perform update commands with --dry-run option
+      --exclude stringArray   Package manager name to be excluded in lazypkg
+  -h, --help                  help for lazypkg
+  -v, --version               version for lazypkg
 ```
 
 ## Keymap
