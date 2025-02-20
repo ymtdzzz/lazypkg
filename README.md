@@ -8,10 +8,13 @@ A terminal application for managing packages across different package managers.
 Currently supported package managers:
 
 - apt
-- docker
 - gem
 - homebrew
 - npm
+
+Following package managers are optional. To enable them, use `--enable-feature` option.
+
+- docker
 
 ![](./docs/images/journey.gif)
 
@@ -24,10 +27,11 @@ Usage:
   lazypkg [flags]
 
 Flags:
-      --dry-run               Perform update commands with --dry-run option
-      --exclude stringArray   Package manager name to be excluded in lazypkg
-  -h, --help                  help for lazypkg
-  -v, --version               version for lazypkg
+      --dry-run                      Perform update commands with --dry-run option
+      --enable-feature stringArray   Optional feature name to be enabled in lazypkg [docker]
+      --exclude stringArray          Package manager name to be excluded in lazypkg
+  -h, --help                         help for lazypkg
+  -v, --version                      version for lazypkg
 ```
 
 ## Keymap
