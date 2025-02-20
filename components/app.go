@@ -20,6 +20,12 @@ const (
 	PACKAGE_MANAGER_DOCKER   = "docker"
 	PACKAGE_MANAGER_NPM      = "npm"
 	PACKAGE_MANAGER_GEM      = "gem"
+
+	ICON_APT      = '\uebc6'
+	ICON_HOMEBREW = '\uf0fc'
+	ICON_DOCKER   = '\uf21f'
+	ICON_NPM      = '\ued0d'
+	ICON_GEM      = '\uf219'
 )
 
 var (
@@ -62,21 +68,24 @@ type AppModel struct {
 }
 
 func NewAppModel(config Config) (AppModel, error) {
-	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, '\uebc6', &executors.AptExecutor{})
-	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, '\uf0fc', &executors.HomebrewExecutor{})
+	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, ICON_APT, &executors.AptExecutor{})
+	homebrew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, ICON_HOMEBREW, &executors.HomebrewExecutor{})
 	de, err := executors.NewDockerExecutor()
 	if err != nil {
 		return AppModel{}, err
 	}
-	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, '\uf21f', de)
-	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, '\ued0d', &executors.NpmExecutor{})
-	gem := NewPackageModel(config, PACKAGE_MANAGER_GEM, '\uf219', &executors.GemExecutor{})
+	docker := NewPackageModel(config, PACKAGE_MANAGER_DOCKER, ICON_DOCKER, de)
+	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, ICON_NPM, &executors.NpmExecutor{})
+	gem := NewPackageModel(config, PACKAGE_MANAGER_GEM, ICON_GEM, &executors.GemExecutor{})
 
 	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
 		PACKAGE_MANAGER_NPM:      &npm,
 		PACKAGE_MANAGER_GEM:      &gem,
+	}
+	if config.Demo {
+		baseMgrs = getDemoMgrs(config)
 	}
 	optionalMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_DOCKER: &docker,
@@ -339,6 +348,80 @@ func (m *AppModel) storePrevCmd() {
 				}
 			}
 		}
+	}
+}
+
+func getDemoMgrs(config Config) map[string]*PackagesModel {
+	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, ICON_APT, executors.NewDemoExecutor(
+		"apt",
+		[]*executors.PackageInfo{
+			&executors.PackageInfo{
+				Name:       "curl",
+				OldVersion: "7.68.0",
+				NewVersion: "7.85.0",
+			},
+			&executors.PackageInfo{
+				Name:       "git",
+				OldVersion: "2.25.1",
+				NewVersion: "2.39.0",
+			},
+		},
+	))
+	brew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, ICON_HOMEBREW, executors.NewDemoExecutor(
+		"brew",
+		[]*executors.PackageInfo{
+			&executors.PackageInfo{
+				Name:       "node",
+				OldVersion: "16.14.0",
+				NewVersion: "18.15.0",
+			},
+			&executors.PackageInfo{
+				Name:       "python",
+				OldVersion: "3.9.7",
+				NewVersion: "3.11.2",
+			},
+			&executors.PackageInfo{
+				Name:       "ffmpeg",
+				OldVersion: "4.4",
+				NewVersion: "5.1",
+			},
+			&executors.PackageInfo{
+				Name:       "terraform",
+				OldVersion: "1.0.11",
+				NewVersion: "1.4.0",
+			},
+			&executors.PackageInfo{
+				Name:       "wget",
+				OldVersion: "1.21.1",
+				NewVersion: "1.21.4",
+			},
+		},
+	))
+	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, ICON_NPM, executors.NewDemoExecutor(
+		"brew",
+		[]*executors.PackageInfo{
+			&executors.PackageInfo{
+				Name:       "react",
+				OldVersion: "17.0.2",
+				NewVersion: "18.2.0",
+			},
+			&executors.PackageInfo{
+				Name:       "express",
+				OldVersion: "4.17.1",
+				NewVersion: "4.18.2",
+			},
+			&executors.PackageInfo{
+				Name:       "lodash",
+				OldVersion: "4.17.21",
+				NewVersion: "4.18.0",
+			},
+		},
+	))
+
+	return map[string]*PackagesModel{
+		PACKAGE_MANAGER_APT:      &apt,
+		PACKAGE_MANAGER_HOMEBREW: &brew,
+		PACKAGE_MANAGER_NPM:      &npm,
 	}
 }
 
