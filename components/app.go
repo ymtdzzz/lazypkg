@@ -75,9 +75,11 @@ func NewAppModel(config Config) (AppModel, error) {
 	baseMgrs := map[string]*PackagesModel{
 		PACKAGE_MANAGER_APT:      &apt,
 		PACKAGE_MANAGER_HOMEBREW: &homebrew,
-		PACKAGE_MANAGER_DOCKER:   &docker,
 		PACKAGE_MANAGER_NPM:      &npm,
 		PACKAGE_MANAGER_GEM:      &gem,
+	}
+	optionalMgrs := map[string]*PackagesModel{
+		PACKAGE_MANAGER_DOCKER: &docker,
 	}
 	for exclude := range config.Excludes {
 		if _, ok := baseMgrs[exclude]; !ok {
@@ -86,6 +88,16 @@ func NewAppModel(config Config) (AppModel, error) {
 				validValues = append(validValues, value)
 			}
 			fmt.Printf("Invalid exclude option. Valid values: %s\n", strings.Join(validValues, ", "))
+			os.Exit(1)
+		}
+	}
+	for enable := range config.EnableFeatures {
+		if _, ok := optionalMgrs[enable]; !ok {
+			validValues := make([]string, 0, len(optionalMgrs))
+			for value := range optionalMgrs {
+				validValues = append(validValues, value)
+			}
+			fmt.Printf("Invalid enable-feature option. Valid values: %s\n", strings.Join(validValues, ", "))
 			os.Exit(1)
 		}
 	}
@@ -99,6 +111,16 @@ func NewAppModel(config Config) (AppModel, error) {
 			continue
 		}
 		if v, ok := config.Excludes[k]; ok && v {
+			continue
+		}
+		pkglists[k] = m
+		mgrs = append(mgrs, k)
+	}
+	for k, m := range optionalMgrs {
+		if !m.Valid() {
+			continue
+		}
+		if v, ok := config.EnableFeatures[k]; !ok || !v {
 			continue
 		}
 		pkglists[k] = m
