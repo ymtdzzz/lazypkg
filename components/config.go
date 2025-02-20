@@ -1,22 +1,24 @@
 package components
 
 type Config struct {
-	DryRun   bool
-	Excludes map[string]bool
+	DryRun         bool
+	Excludes       map[string]bool
+	EnableFeatures map[string]bool
 }
 
-func NewConfig(dryRun bool, excludes []string) Config {
+func NewConfig(dryRun bool, excludes []string, enables []string) Config {
 	return Config{
-		DryRun:   dryRun,
-		Excludes: getExcludeMap(excludes),
+		DryRun:         dryRun,
+		Excludes:       getBoolMapFromArray(excludes),
+		EnableFeatures: getBoolMapFromArray(enables),
 	}
 }
 
-func getExcludeMap(excludes []string) map[string]bool {
+func getBoolMapFromArray(input []string) map[string]bool {
 	result := map[string]bool{}
 
-	for _, exclude := range excludes {
-		result[exclude] = true
+	for _, key := range input {
+		result[key] = true
 	}
 
 	return result
