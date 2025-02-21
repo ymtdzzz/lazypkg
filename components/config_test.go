@@ -11,6 +11,7 @@ func TestNewConfig(t *testing.T) {
 		dryRun   bool
 		excludes []string
 		enables  []string
+		demo     bool
 	}
 
 	tests := []struct {
@@ -18,7 +19,7 @@ func TestNewConfig(t *testing.T) {
 		want  Config
 	}{
 		{
-			input: input{false, []string{}, []string{}},
+			input: input{false, []string{}, []string{}, false},
 			want: Config{
 				DryRun:         false,
 				Excludes:       map[string]bool{},
@@ -26,7 +27,7 @@ func TestNewConfig(t *testing.T) {
 			},
 		},
 		{
-			input: input{false, []string{"hoge", "fuga"}, []string{"piyo"}},
+			input: input{false, []string{"hoge", "fuga"}, []string{"piyo"}, false},
 			want: Config{
 				DryRun: false,
 				Excludes: map[string]bool{
@@ -41,7 +42,7 @@ func TestNewConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := NewConfig(tt.input.dryRun, tt.input.excludes, tt.input.enables)
+		got := NewConfig(tt.input.dryRun, tt.input.excludes, tt.input.enables, tt.input.demo)
 		assert.Equal(t, tt.want, got)
 	}
 }
