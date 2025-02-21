@@ -39,7 +39,10 @@ func main() {
 	rootCmd.Flags().StringArrayVar(&enableFeatures, "enable-feature", []string{}, "Optional feature name to be enabled in lazypkg [docker]")
 	rootCmd.Flags().BoolVar(&demo, "demo", false, "")
 
-	rootCmd.Flags().MarkHidden("demo")
+	if err := rootCmd.Flags().MarkHidden("demo"); err != nil {
+		log.Println("Error marking hidden flag:", err)
+		os.Exit(1)
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Println("Error running program:", err)

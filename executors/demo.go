@@ -31,7 +31,9 @@ func (de *DemoExecutor) Update(pkg, _ string, _ bool) error {
 
 func (de *DemoExecutor) BulkUpdate(pkgs []string, _ string, _ bool) error {
 	for _, pkg := range pkgs {
-		de.update(pkg)
+		if err := de.update(pkg); err != nil {
+			return err
+		}
 	}
 
 	return nil
