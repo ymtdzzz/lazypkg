@@ -22,3 +22,10 @@ test: ## run test ex.) make test OPT="-run TestXXX"
 test-coverage: ## Run test with coverage
 	$(MAKE) test OPT="-coverprofile=coverage.out"
 	go tool cover -html=coverage.out
+
+update-screenshot: ## Update screenshot for docs
+	@command -v vhs > /dev/null || (echo "vhs is needed. see: https://github.com/charmbracelet/vhs?tab=readme-ov-file#installation" && exit 1)
+	go build -o otel-tui
+	vhs screenshot.tape
+	rm ./out.gif
+	rm ./otel-tui
