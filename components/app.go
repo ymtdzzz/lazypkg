@@ -355,12 +355,12 @@ func getDemoMgrs(config Config) map[string]*PackagesModel {
 	apt := NewPackageModel(config, PACKAGE_MANAGER_APT, ICON_APT, executors.NewDemoExecutor(
 		"apt",
 		[]*executors.PackageInfo{
-			&executors.PackageInfo{
+			{
 				Name:       "curl",
 				OldVersion: "7.68.0",
 				NewVersion: "7.85.0",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "git",
 				OldVersion: "2.25.1",
 				NewVersion: "2.39.0",
@@ -370,27 +370,27 @@ func getDemoMgrs(config Config) map[string]*PackagesModel {
 	brew := NewPackageModel(config, PACKAGE_MANAGER_HOMEBREW, ICON_HOMEBREW, executors.NewDemoExecutor(
 		"brew",
 		[]*executors.PackageInfo{
-			&executors.PackageInfo{
+			{
 				Name:       "node",
 				OldVersion: "16.14.0",
 				NewVersion: "18.15.0",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "python",
 				OldVersion: "3.9.7",
 				NewVersion: "3.11.2",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "ffmpeg",
 				OldVersion: "4.4",
 				NewVersion: "5.1",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "terraform",
 				OldVersion: "1.0.11",
 				NewVersion: "1.4.0",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "wget",
 				OldVersion: "1.21.1",
 				NewVersion: "1.21.4",
@@ -400,17 +400,17 @@ func getDemoMgrs(config Config) map[string]*PackagesModel {
 	npm := NewPackageModel(config, PACKAGE_MANAGER_NPM, ICON_NPM, executors.NewDemoExecutor(
 		"brew",
 		[]*executors.PackageInfo{
-			&executors.PackageInfo{
+			{
 				Name:       "react",
 				OldVersion: "17.0.2",
 				NewVersion: "18.2.0",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "express",
 				OldVersion: "4.17.1",
 				NewVersion: "4.18.2",
 			},
-			&executors.PackageInfo{
+			{
 				Name:       "lodash",
 				OldVersion: "4.17.21",
 				NewVersion: "4.18.0",
