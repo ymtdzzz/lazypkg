@@ -316,6 +316,8 @@ func (m *AppModel) updateLayout(w, h int) {
 	rightHeight := h / 2
 	if h%2 == 0 {
 		rightHeight -= 1
+	} else {
+		rightHeight -= 2
 	}
 
 	dfw, dfh := docStyle.GetFrameSize()
