@@ -1,13 +1,12 @@
 module github.com/ymtdzzz/lazypkg
 
 go 1.23.6
-
 require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20250213125511-a0c32e22e4fc
-	github.com/docker/docker v28.0.2+incompatible
+	github.com/docker/docker v28.0.4+incompatible
 	github.com/regclient/regclient v0.8.2
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
