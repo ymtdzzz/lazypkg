@@ -107,9 +107,9 @@ func (m OutputModel) Update(msg tea.Msg) (OutputModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keyMap.down):
-			m.viewport.LineDown(1)
+			m.viewport.ScrollDown(1)
 		case key.Matches(msg, m.keyMap.up):
-			m.viewport.LineUp(1)
+			m.viewport.ScrollUp(1)
 		}
 	}
 
