@@ -7,7 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20250213125511-a0c32e22e4fc
-	github.com/docker/docker v28.3.2+incompatible
+	github.com/docker/docker v28.3.3+incompatible
 	github.com/regclient/regclient v0.9.0
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
